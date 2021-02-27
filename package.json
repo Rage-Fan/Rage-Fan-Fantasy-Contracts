@@ -1,0 +1,26 @@
+{
+  "name": "erc20-factory",
+  "version": "1.0.0",
+  "description": "A simple factory for deploying ERC20 tokens.",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Samuel Corso",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/contracts": "^2.4.0",
+    "openzeppelin-solidity": "^2.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samc621/ERC20-Factory.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samc621/ERC20-Factory/issues"
+  },
+  "homepage": "https://github.com/samc621/ERC20-Factory#readme"
+}
