@@ -8,21 +8,22 @@ pragma solidity 0.5.0;
  * Version : 0.1 
  */
 
-
+import "@openzeppelin/contracts/ownership/Ownable.sol";
 import { RageContest } from './RageContest.sol';
 
-contract RageFactory {
+contract RageFactory is Ownable {
     address[] public contests;
 
     event ContestCreated(string  name, address tokenAddress);
 
     function createNewContest(string memory _name, string memory _id, uint _startTime, 
-                              uint _endTime,   address _issuer 
+                              uint _endTime
                             )
+                            onlyOwner
                             public returns (address) {
 
 
-                RageContest newContest = new RageContest(_name, _id, _startTime, _endTime, _issuer);
+                RageContest newContest = new RageContest(_name, _id, _startTime, _endTime);
                 contests.push(address(newContest));
 
                 emit ContestCreated(_name, address(newContest));

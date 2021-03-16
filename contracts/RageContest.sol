@@ -1,5 +1,8 @@
 pragma solidity 0.5.0;
 
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
 /**
  * Name    : Rage Contest smart contract for managing a contest  
  * Company : Rage.Fan 
@@ -7,7 +10,6 @@ pragma solidity 0.5.0;
  * Date    : 20-Feb-2021
  * Version : 0.1 
  */
-
 
 contract TokenInterface {
     function transfer(address _to, uint256 _value) public returns (bool success);
@@ -19,62 +21,12 @@ contract TokenInterface {
 
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-
-/**
  * @title Fantasy Contest
  * @dev 
  * @dev 
  */
 
-
-contract RageContest  {
+contract RageContest is Ownable {
 
     string public  contestId;
     string public  name;
@@ -87,11 +39,11 @@ contract RageContest  {
     uint public minContestants;
     uint public startTime;
     uint public endTime;
-    bool public canceled;   
-    address  public owner; 
+    bool public canceled;  
+    bool public settled; 
+    address  public player; 
     address[] public contestants; 
     
-
     struct Player {
       string id; 
       string name;
@@ -99,27 +51,131 @@ contract RageContest  {
       string captain;  //C,VC,P  
     }
 
+    mapping(address => uint256) public fundsByParticipants;
+    mapping(address => uint256) public fundsByWinners;
+
     event ContestCanceled();
+    event LogPlay(address player);
 
     /*
     * Contract Constructor
     */
-    constructor(string memory _name, string memory _id, uint _startTime, uint _endTime,   address _issuer) public {
+    constructor(string memory _name, string memory _id, uint _startTime, uint _endTime, address _tokenAddress) public {
         name      = _name;
         contestId = _id;
         startTime = _startTime;
         endTime   = _endTime;
-        owner     = _issuer;
-      
+
+        token = TokenInterface(_tokenAddress);
+        
     }
 
-    function withdraw()
+function withdraw()
         public pure
-        // onlyEndedOrCanceled
-       returns (bool success)
+        onlyEndedOrCanceled
+        returns (bool success)
         {
             return true;
         }
+
+function withdrawWinningAmount()
+        public pure
+        onlyAfterEnd 
+        onlyNotCanceled
+        onlyAfterSettlement
+        returns (bool success)
+        {
+            return true;
+        }
+
+      
+function playNow(uint _value)
+        public
+        onlyBeforeStart
+        onlyNotCanceled
+        returns (bool success)
+        {
+        
+        require (_value != 0);
+        require (_value > 0);
+        
+        require(token.balanceOf(msg.sender) > _value);
+        require(token.transferFrom(msg.sender, this, _value));
+
+        // calculate the user's total bid based on the current amount they've sent to the contract
+        // plus whatever has been sent with this transaction
+        
+        fundsByParticipants[msg.sender] = fundsByParticipants[msg.sender] + _value;
+
+        emit LogPlay(msg.sender);
+        return true;
+    }
+
+         
+function changeTeam(uint _value)
+        public
+        onlyBeforeStart
+        onlyNotCanceled
+        returns (bool success)
+        {
+        
+        require (_value != 0);
+        require (_value > 0);
+        
+        require(token.balanceOf(msg.sender) > _value);
+        require(token.transferFrom(msg.sender, this, _value));
+
+        // calculate the user's total bid based on the current amount they've sent to the contract
+        // plus whatever has been sent with this transaction
+        
+        fundsByParticipants[msg.sender] = fundsByParticipants[msg.sender] + _value;
+
+        emit LogPlay(msg.sender);
+        return true;
+    }
+
+
+ function updateWinningData(address[] _winnners, uint256[] memory _amount)
+        public
+        onlyOwner
+        onlyAfterEnd
+        onlyNotCanceled
+        returns (bool success)
+    {
+        //
+        // update the winning address with
+        // winning amount 
+        // 
+        
+        for (i=0; i<_winners.length; i++) {
+            fundsByWinners[_winners[i]] = _amount[i];
+        }
+       
+        emit winningDataUpdated();
+        return true;
+    }
+
+
+ function playerPoints(address[] _players, uint[] memory _points)
+        public
+        onlyOwner
+        onlyAfterEnd
+        onlyNotCanceled
+        returns (bool success)
+    {
+        //
+        // update the winning address with
+        // winning amount 
+        // 
+        
+        for (i=0; i<_players.length; i++) {
+            _players[i] = _points[i];
+        }
+       
+        emit winningDataUpdated();
+        return true;
+    }
+
 
     // function getContestants ()
     //     view
@@ -142,18 +198,19 @@ function cancelContest()
         return true;
     }
 
- modifier onlyOwner {
-        assert (msg.sender == owner) ;
-        _;
-    }
 
-    modifier onlyNotOwner {
-        require (msg.sender != owner) ;
-        _;
-    }
+//     modifier onlyNotOwner {
+//         require (msg.sender != owner) ;
+//         _;
+//     }
 
     modifier onlyAfterStart {
         require (block.timestamp > startTime) ;
+        _;
+    }
+
+    modifier onlyBeforeStart {
+        require (block.timestamp < startTime) ;
         _;
     }
 
@@ -162,8 +219,18 @@ function cancelContest()
         _;
     }
 
+    modifier onlyAfterEnd {
+        require (block.timestamp > endTime) ;
+        _;
+    }
+
     modifier onlyNotCanceled {
         require (!canceled) ;
+        _;
+    }
+
+    modifier onlyAfterSettlement {
+        require (settled) ;
         _;
     }
 
