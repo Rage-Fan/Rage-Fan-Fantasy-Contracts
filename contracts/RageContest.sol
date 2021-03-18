@@ -297,9 +297,9 @@ function cancelContest()
         _;
     }
 
-    // modifier onlyOwner() {
-    //     assert (msg.sender == owner) ;
-    //     _;
-    // }
+    modifier onlyOwner() {
+        assert (msg.sender == owner) ;
+        _;
+    }
 
 }
