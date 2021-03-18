@@ -1,7 +1,7 @@
 pragma solidity 0.5.0;
 
-// import "@openzeppelin/contracts/ownership/Ownable.sol";
- import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 /**
  * Name    : Rage Contest smart contract for managing a contest  
@@ -297,9 +297,9 @@ function cancelContest()
         _;
     }
 
-    modifier onlyOwner() {
-        assert (msg.sender == owner) ;
-        _;
-    }
+    // modifier onlyOwner() {
+    //     assert (msg.sender == owner) ;
+    //     _;
+    // }
 
 }

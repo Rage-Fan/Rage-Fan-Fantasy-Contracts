@@ -8,7 +8,7 @@ pragma solidity 0.5.0;
  * Version : 0.1 
  */
 
-// import "@openzeppelin/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts/ownership/Ownable.sol";
 import { RageContest } from './RageContest.sol';
 
 contract RageFactory  {
