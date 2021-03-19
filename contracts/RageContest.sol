@@ -2,6 +2,7 @@ pragma solidity 0.5.0;
 
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "./EIP712MetaTransaction.sol";
 
 /**
  * Name    : Rage Contest smart contract for managing a contest  
@@ -37,12 +38,12 @@ interface TokenInterface {
  * @dev 
  */
 
-contract RageContest  {
+contract RageContest is EIP712MetaTransaction("RageFactoryContract","1", 80001) {
  
     TokenInterface public token;
 
-    string public  contestId;
-    string public  name;
+    string public contestId;
+    string public name;
     string public contestTitle;
     uint256 public contestFees;
     uint256 public winningAmount;
@@ -50,7 +51,6 @@ contract RageContest  {
     bool public isActive;
     address public owner;
     
-
     Player[] public players;
 
     uint public prizePool;
@@ -103,7 +103,7 @@ contract RageContest  {
                 contestFees     =   _contestFees;
                 winningAmount   =   _winningAmount;
                 isActive        =   _isActive;
-                owner = msg.sender;            
+                owner = msgSender();            
                 token = TokenInterface(_tokenAddress);
         
     }
@@ -113,12 +113,12 @@ function withdraw(uint256 _amount)
         onlyEndedOrCanceled
         returns (bool success)
         {
-            require(_amount <= fundsByParticipants[msg.sender]);
-                fundsByParticipants[msg.sender] = fundsByParticipants[msg.sender] - _amount;
+            require(_amount <= fundsByParticipants[msgSender()]);
+                fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
             
-            require(token.transfer(msg.sender, _amount));
+            require(token.transfer(msgSender(), _amount));
 
-            emit LogWithdrawal(msg.sender, _amount);
+            emit LogWithdrawal(msgSender(), _amount);
             return true;
         }
 
@@ -130,12 +130,12 @@ function withdrawWinningAmount(uint256 _amount)
         onlyAfterSettlement
         returns (bool success)
         {
-            require(_amount <= fundsByParticipants[msg.sender]);
-            fundsByParticipants[msg.sender] = fundsByParticipants[msg.sender] - _amount;
+            require(_amount <= fundsByParticipants[msgSender()]);
+            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
             
-            require(token.transfer(msg.sender, _amount));
+            require(token.transfer(msgSender(), _amount));
 
-            emit LogWithdrawal(msg.sender, _amount);
+            emit LogWithdrawal(msgSender(), _amount);
             return true;
 
         }
@@ -154,13 +154,13 @@ function playNow(uint _value)
         // transfer play entry fee to the smart contract 
         //
        
-        require(token.balanceOf(msg.sender) > _value);
-        require(token.transferFrom(msg.sender, address(this), _value));
-        fundsByParticipants[msg.sender] = fundsByParticipants[msg.sender] + _value;
+        require(token.balanceOf(msgSender()) > _value);
+        require(token.transferFrom(msgSender(), address(this), _value));
+        fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
 
         // other data to be updated
 
-        emit LogPlay(msg.sender);
+        emit LogPlay(msgSender());
         return true;
     }
 
@@ -298,7 +298,7 @@ function cancelContest()
     }
 
     modifier onlyOwner() {
-        assert (msg.sender == owner) ;
+        assert (msgSender() == owner) ;
         _;
     }
 

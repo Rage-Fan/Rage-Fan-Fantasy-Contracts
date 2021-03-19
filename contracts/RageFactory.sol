@@ -10,8 +10,12 @@ pragma solidity 0.5.0;
 
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import { RageContest } from './RageContest.sol';
+import "./EIP712MetaTransaction.sol";
 
-contract RageFactory  {
+/**
+* Chain id = 80001 is matic Mumbai test net rpc-mumbai. need to change for main net 
+*/
+contract RageFactory is EIP712MetaTransaction("RageFactoryContract","1", 80001) {
     address[] public contests;
     address public  owner;
 
@@ -38,7 +42,7 @@ contract RageFactory  {
         }
 
         modifier onlyOwner {
-        assert (msg.sender == owner) ;
+        assert (msgSender() == owner) ;
         _;
     }
 
