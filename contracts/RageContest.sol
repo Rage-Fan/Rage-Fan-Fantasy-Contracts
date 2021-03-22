@@ -1,24 +1,6 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.16;
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./EIP712MetaTransaction.sol";
-
-/**
- * Name    : Rage Contest smart contract for managing a contest  
- * Company : Rage.Fan 
- * Author  : Saravana Malaichami (saravana at rage.fan)
- * Date    : 20-Feb-2021
- * Version : 0.1 
- */
-
-// interface TokenInterface {
-//     function transfer(address _to, uint256 _value) public returns (bool success);
-//     function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
-//     function balanceOf(address who) public view returns (uint256);
-//     function allowance(address owner, address spender)  public view returns (uint256);
-//     function approve(address _spender, uint256 _value) external returns (bool success);
-// }
 
 interface TokenInterface {
     function totalSupply() external view returns (uint256);
@@ -32,13 +14,7 @@ interface TokenInterface {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/**
- * @title Fantasy Contest
- * @dev 
- * @dev 
- */
-
-contract RageContest is EIP712MetaTransaction("RageFactoryContract","1", 80001) {
+contract RageContest is EIP712MetaTransaction {
  
     TokenInterface public token;
 
@@ -85,16 +61,30 @@ contract RageContest is EIP712MetaTransaction("RageFactoryContract","1", 80001) 
     event PlayerDataUpdated();
     event LogWithdrawal(address withdrawer,  uint amount);
 
+    event ContestCreatedEvent(address sender, string  _id, string  _name,  uint _startTime, uint _endTime, 
+                string  _contestTitle);
     /*
     * Contract Constructor
     */
-    constructor(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
+    constructor(address _adminOwner) 
+    public 
+    EIP712MetaTransaction("RageContestContract","1", 80001)
+    {  
+                name  =   "FirstGameofCricket"; 
+                owner =   _adminOwner;                       
+    }
+
+ function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
                 string memory _contestTitle,
                 uint256 _contestFees, 
                 uint256 _winningAmount, 
                 bool _isActive,
-                address _tokenAddress) public {
-        
+                address _tokenAddress,
+                address from) public {
+                    
+        require(bytes(name).length == 0); // ensure not init'd already.
+        require(bytes(_name).length > 0);
+
                 contestId       =   _id;
                 name            =   _name;
                 startTime       =   _startTime;
@@ -103,10 +93,13 @@ contract RageContest is EIP712MetaTransaction("RageFactoryContract","1", 80001) 
                 contestFees     =   _contestFees;
                 winningAmount   =   _winningAmount;
                 isActive        =   _isActive;
-                owner = msgSender();            
-                token = TokenInterface(_tokenAddress);
-        
-    }
+                owner = from;            
+                token = TokenInterface(_tokenAddress);   
+         }
+
+ function callContest() public {
+    emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
+  }   
 
 function withdraw(uint256 _amount)
         public 

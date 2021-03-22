@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.16;
 
 /**
  * Name    : Rage Factory Contract for managing contests smart contracts 
@@ -8,38 +8,56 @@ pragma solidity 0.5.0;
  * Version : 0.1 
  */
 
-import "@openzeppelin/contracts/ownership/Ownable.sol";
 import { RageContest } from './RageContest.sol';
 import "./EIP712MetaTransaction.sol";
+import "./CloneFactory.sol";
 
 /**
 * Chain id = 80001 is matic Mumbai test net rpc-mumbai. need to change for main net 
 */
-contract RageFactory is EIP712MetaTransaction("RageFactoryContract","1", 80001) {
+contract RageFactory is CloneFactory,  EIP712MetaTransaction {
     address[] public contests;
-    address public  owner;
+    address private  owner;
 
-    event ContestCreated(string  name, address contestAddress);
+    address public libraryAddress;
+
+    event ContestCreated(string name, address newContest);
+
+    constructor(address _adminOwner, address _libraryAddress) 
+    public 
+    EIP712MetaTransaction("RageFactoryContract","1", 80001)
+    {
+       owner = _adminOwner;
+       libraryAddress = _libraryAddress;
+    }
+
+    function onlyCreate() public {
+        createClone(libraryAddress);
+    }
 
     function createNewContest(string memory _id, string memory _name,  uint _startTime, 
                               uint _endTime, string memory _contestTitle, uint256 _contestFees, 
                               uint256 _winningAmount, bool _isActive, address _tokenAddress
                             )
-                            onlyOwner
-                            public returns (address) {
+                            public {
 
-
-                RageContest newContest = new RageContest( _id, _name, _startTime, _endTime,
+                   address clone = createClone(libraryAddress);
+                   RageContest(clone).init(_id, _name, _startTime, _endTime,
                                                           _contestTitle,
                                                           _contestFees,
                                                           _winningAmount,
                                                           _isActive,
-                                                          _tokenAddress
-                                                        );
-                contests.push(address(newContest));
+                                                          _tokenAddress, owner); 
+                               
+                contests.push(address(clone));
 
-                emit ContestCreated(_name, address(newContest));
+                emit ContestCreated(_name, address(clone));
         }
+
+      function getContests() external view returns (address[] memory) {
+        return contests;
+      }
+
 
         modifier onlyOwner {
         assert (msgSender() == owner) ;
