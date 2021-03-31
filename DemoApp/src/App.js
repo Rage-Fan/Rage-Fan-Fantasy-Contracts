@@ -4,11 +4,15 @@ import Web3 from "web3";
 
 const abi = require("./FanTestToken.json").abi;
 const abiRageFactory = require("./RageFactory.json").abi;
+const abiRageContest = require("./RageContest.json").abi;
 
 const sigUtil = require("eth-sig-util");
 // GineteToken contract address
 const contractAddress = "0xdf538eC14801624b06214e9C4dE44b3CD555B374"; 
 const rageFactoryAddress = "0x0E13cbEdA9B5697117e352B79f7DD4fcc9C5D54E";
+const rageContestAddress = "0x728c7eb7d1d6b8f3d35e0f59e4b3434f8faf94b4";
+
+
 //const biconomyAPIKey = 'BgHpxlSpJ.4268404e-fe03-402d-af18-0daad38c4ebb';  // Biconomy api key from the dashboard  
 const parentChainId =  '80001'; // chain id of the network 
 const maticProvider =  'https://rpc-mumbai.matic.today'; //'https://testnetv3.matic.network';
@@ -45,9 +49,15 @@ let domainRageFactoryData = {
   verifyingContract: "0x0E13cbEdA9B5697117e352B79f7DD4fcc9C5D54E"   
  };
 
+ let domainRageContestData = {
+  name: "RageContestContract",
+  version: "1",
+  chainId: parentChainId,
+  verifyingContract: "0x728c7eb7d1d6b8f3d35e0f59e4b3434f8faf94b4"   
+ };
 
 let web3, walletWeb3;
-let contract, contractRageFactory;
+let contract, contractRageFactory, contractRageContest;
 let provider;
 //const [selectedAddress, setSelectedAddress] = useState("");
 
@@ -82,7 +92,12 @@ async function init() {
             abiRageFactory, rageFactoryAddress              
           );
 
+          contractRageContest = new web3.eth.Contract(
+            abiRageContest, rageContestAddress
+          );
+
           console.log("RageFactory: ",contractRageFactory);
+          console.log("RageContest: ",contractRageContest);
           console.log(contract);
           console.log(provider.selectedAddress);
           //setSelectedAddress(provider.selectedAddress);
@@ -145,15 +160,22 @@ init();
       console.log("6", functionSignature );
       executeMetaTransaction(functionSignature, nonce); 
     }
-    else if(type == 'ApproveTransfer'){     
+    else if(type == 'ApproveTransfer'){  
+      let nonce = await contract.methods.getNonce(userAddress).call();   
       functionSignature =  contract.methods.approve(userAddress, amount).encodeABI();
       console.log("7", functionSignature );
       executeMetaTransaction(functionSignature, nonce); 
 
-      functionSignature =  contract.methods.transferFrom( userAddress, recipient, amount).encodeABI();
+      // functionSignature =  contract.methods.transferFrom( userAddress, rageContestAddress, amount).encodeABI();
+      // console.log("8", functionSignature );
+      // let nonce2 = (parseInt(nonce) + 1);
+      // executeMetaTransaction(functionSignature, nonce2);
+      // var value = 15;
+      functionSignature =  contractRageContest.methods.playNow(amount).encodeABI();
       console.log("8", functionSignature );
       let nonce2 = (parseInt(nonce) + 1);
-      executeMetaTransaction(functionSignature, nonce2); 
+     // let nonce2 = await contractRageContest.methods.getNonce(userAddress).call();
+      executeRageContestMetaTransaction(functionSignature, nonce2)
     } 
     else if (type == 'NewContest'){
       let ragenonce = await contractRageFactory.methods.getNonce(userAddress).call();
@@ -383,7 +405,82 @@ init();
           //   });
         }
       );
-    };
+  };
+
+  const executeRageContestMetaTransaction = async (functionSignature, nonce) => {
+    // const accounts = await web3.eth.getAccounts();
+    // let userAddress = accounts[0];
+    let userAddress = provider.selectedAddress;
+
+    let message = {};
+    message.nonce = parseInt(nonce);
+    message.from = userAddress;
+    message.functionSignature = functionSignature;
+
+    const dataToSign = JSON.stringify({
+      types: {
+        EIP712Domain: domainType,
+        MetaTransaction: metaTransactionType
+      },
+      domain: domainRageContestData,
+      primaryType: "MetaTransaction",
+      message: message
+    });
+
+      console.log(dataToSign);
+
+      walletWeb3.eth.currentProvider.send(
+        {
+          jsonrpc: "2.0",
+          id: 999999999999,
+          method: "eth_signTypedData_v4",
+          params: [userAddress, dataToSign]
+      },
+        function(error, response) {
+          
+          if(response){
+            console.log("response", response);
+            let { r, s, v } = getSignatureParameters(response.result);
+            
+            const recovered = sigUtil.recoverTypedSignature_v4({
+              data: JSON.parse(dataToSign),
+              sig: response.result
+            });
+              sendRageContestSignedTransaction(userAddress, functionSignature, r, s, v);           
+
+          }
+         
+        }
+      );
+  };
+
+  const sendRageContestSignedTransaction = async (userAddress, functionData, r, s, v) => {
+    if (web3 && contractRageContest) {
+      try {
+        console.log("owner", userAddress);
+        let gasLimit = await contractRageContest.methods
+            .executeMetaTransaction(userAddress, functionData, r, s, v)
+            .estimateGas({ from: userAddress });
+        let gasPrice = await web3.eth.getGasPrice();
+        let tx = contractRageContest.methods
+            .executeMetaTransaction(userAddress, functionData, r, s, v)
+            .send({
+                from: userAddress
+            });
+
+        tx.on("transactionHash", function (hash) {
+            console.log(`Transaction hash is ${hash}`);
+          }).once("confirmation", function (confirmationNumber, receipt) {
+            console.log(receipt);
+            //setTransactionHash(receipt.transactionHash);
+            //showSuccessMessage("Transaction confirmed on chain");
+            //getQuoteFromNetwork();
+        });
+      } catch (error) {
+        console.log(error);
+       }
+    }
+ };  
 
     const sendRageSignedTransaction = async (userAddress, functionData, r, s, v) => {
       if (web3 && contractRageFactory) {

@@ -94,7 +94,9 @@ contract RageContest is EIP712MetaTransaction {
                 winningAmount   =   _winningAmount;
                 isActive        =   _isActive;
                 owner = from;            
-                token = TokenInterface(_tokenAddress);   
+                token = TokenInterface(_tokenAddress); 
+                canceled = false;
+                settled = false;  
          }
 
  function callContest() public {
@@ -134,7 +136,7 @@ function withdrawWinningAmount(uint256 _amount)
         }
 
       
-function playNow(uint _value)
+function playNow(uint256 _value)
         public
         onlyBeforeStart
         onlyNotCanceled
@@ -148,6 +150,7 @@ function playNow(uint _value)
         //
        
         require(token.balanceOf(msgSender()) > _value);
+        require(token.approve(msgSender(), _value));
         require(token.transferFrom(msgSender(), address(this), _value));
         fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
 

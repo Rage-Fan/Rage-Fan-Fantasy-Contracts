@@ -59,9 +59,7 @@ async function init() {
       biconomy.onEvent(biconomy.READY, () => {
           // Initialize your dapp here like getting user accounts etc
           contract = new web3.eth.Contract(
-            abi, contractAddress
-              // config.contract.abi,
-              // config.contract.address
+            abi, contractAddress              
           );
          
         
