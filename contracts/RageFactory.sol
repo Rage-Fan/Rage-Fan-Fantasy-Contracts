@@ -16,9 +16,9 @@ import "./CloneFactory.sol";
 * Chain id = 80001 is matic Mumbai test net rpc-mumbai. need to change for main net 
 */
 contract RageFactory is CloneFactory,  EIP712MetaTransaction {
-    address[] public contests;
+    RageContest[] public contests;
     address private  owner;
-
+    
     address public libraryAddress;
 
     event ContestCreated(string name, address newContest);
@@ -28,7 +28,7 @@ contract RageFactory is CloneFactory,  EIP712MetaTransaction {
     EIP712MetaTransaction("RageFactoryContract","1", 80001)
     {
        owner = _adminOwner;
-       libraryAddress = _libraryAddress;
+       libraryAddress = _libraryAddress;       
     }
 
     function onlyCreate() public {
@@ -37,24 +37,25 @@ contract RageFactory is CloneFactory,  EIP712MetaTransaction {
 
     function createNewContest(string memory _id, string memory _name,  uint _startTime, 
                               uint _endTime, string memory _contestTitle, uint256 _contestFees, 
-                              uint256 _winningAmount, bool _isActive, address _tokenAddress
+                              uint256 _winningAmount, bool _isActive, address _token
                             )
-                            public {
+                            public  {
 
-                   address clone = createClone(libraryAddress);
-                   RageContest(clone).init(_id, _name, _startTime, _endTime,
+                   RageContest clone = RageContest(createClone(libraryAddress));
+                   clone.init(_id, _name, _startTime, _endTime,
                                                           _contestTitle,
                                                           _contestFees,
                                                           _winningAmount,
                                                           _isActive,
-                                                          _tokenAddress, owner); 
+                                                          _token, owner); 
                                
-                contests.push(address(clone));
+                contests.push(clone);
 
                 emit ContestCreated(_name, address(clone));
+                
         }
 
-      function getContests() external view returns (address[] memory) {
+      function getContests() external view returns (RageContest[] memory) {
         return contests;
       }
 

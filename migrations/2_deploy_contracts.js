@@ -1,5 +1,7 @@
 const rageContest = artifacts.require("./RageContest.sol");
 const rageFactory = artifacts.require("./RageFactory.sol");
+const fanTestToken = artifacts.require("./FanTestToken.sol");
+
 module.exports = function(deployer, network, accounts) {
 
   //  const ownerAddress = '0x508D3a0E42f04B1103e3684972A45F29C53d785b';
@@ -9,7 +11,12 @@ module.exports = function(deployer, network, accounts) {
     try {
       // deploy and link MessagesAndCodes lib for MessagedERC1404's    
      
-     const ownerAddress = '0x508D3a0E42f04B1103e3684972A45F29C53d785b';
+    // const ownerAddress = '0x508D3a0E42f04B1103e3684972A45F29C53d785b';
+     const ownerAddress = accounts[0];
+
+     await deployer.deploy(fanTestToken);
+     const token  = await fanTestToken.deployed();
+
       await deployer.deploy(rageContest, ownerAddress);
 
       const libarayAddress = await rageContest.deployed();
