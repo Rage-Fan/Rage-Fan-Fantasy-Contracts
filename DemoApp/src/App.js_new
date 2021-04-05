@@ -9,9 +9,9 @@ const abiRageContest = require("./RageContest.json").abi;
 const sigUtil = require("eth-sig-util");
 // GineteToken contract address
 const contractAddress = "0xb17A9A058F05573bF820601E3A6CC968bE39b495"; 
-const rageFactoryAddress = "0x98b3825a7b1859191A1dEbF1b18496FAc26f0cd8";
-const rageGenesisContest = "0x5374Ceb86cBe84150fA3A1e7BCe6C986d259Ea1d";
-const rageContestAddress = "0x86FFFfe9A7476cA56CcCc8d404B840a8ADFc30b8"; //"0xfe944bc60fc7d8f5358a6d0d9de4f9a58fd3c2e7"; //"0x5ac0539060429082972fe9daedad30d75a3bb3a2";
+const rageFactoryAddress = "0x9B9109FCc158797B01c42b4787a0214B16f291d7";
+const rageGenesisContest = "0x1b206AE78939e869Dd16d6b25b0159F223300d71";
+const rageContestAddress = "0x56b73b4d1B0353aB00Cc108EC77B1A6a098dA5Fd"; //"0x5ac0539060429082972fe9daedad30d75a3bb3a2";
 
 
 //const biconomyAPIKey = 'BgHpxlSpJ.4268404e-fe03-402d-af18-0daad38c4ebb';  // Biconomy api key from the dashboard  
@@ -72,16 +72,13 @@ async function init() {
       await provider.enable();
      // let kovanProvider = new Web3.providers.HttpProvider("https://kovan.infura.io/v3/d126f392798444609246423b06116c77");
      // setLoadingMessage("Initializing Biconomy ...");
-      let matictestProvider = new Web3.providers.HttpProvider(maticProvider);
-     const biconomy = new Biconomy(matictestProvider, { apiKey: 'Mg4po8zbw.b0e298c7-8f86-4543-b9c5-64ae297ebc16', debug: true });
-
+      let matictestProvider = new Web3.providers.HttpProvider(maticProvider);     
       // This web3 instance is used to read normally and write to contract via meta transactions.
-      web3 = new Web3(biconomy);
-      
+      web3 = new Web3(matictestProvider);      
       // This web3 instance is used to get user signature from connected wallet
       walletWeb3 = new Web3(window.ethereum);
 
-      biconomy.onEvent(biconomy.READY, () => {
+     
           // Initialize your dapp here like getting user accounts etc
           contract = new web3.eth.Contract(
             abi, contractAddress
@@ -100,18 +97,15 @@ async function init() {
           console.log("RageFactory: ",contractRageFactory._address);
           console.log("RageContest: ",contractRageContest._address);
           console.log(contract);
-          console.log(provider.selectedAddress);
-          
-      }).onEvent(biconomy.ERROR, (error, message) => {
-          // Handle error while initializing mexa
-      });
+          console.log(provider.selectedAddress);          
+     
   } else {
       console.log("Metamask not installed");
   }
 }
 init();
 
-  const amount =  "15000000000000000000"; //"1500000000000000000000000";    //"1000000000000000000";
+  const amount =  "15000000000000000000";    //"1000000000000000000";
   const recipient = "0xAE1043B0363D13fAC2FaF765a3C6d5020a32ecc6"; //"0xC26e931d3A4005Fec70E3Fd20C485744649f154A"; // "0xCaE5D611D456CE3650E1b80EC85406371D55Da68";
   
   const metaTransfer = async (type) => {
@@ -130,12 +124,12 @@ init();
       console.log("5", functionSignature );
      executeMetaTransaction(functionSignature, nonce); 
     }
-    else if(type == 'Transfer'){
+    else if(type === 'Transfer'){
       functionSignature = contract.methods.transfer(recipient, amount).encodeABI();
       console.log("6", functionSignature );
       executeMetaTransaction(functionSignature, nonce); 
     }
-    else if(type == 'ApproveTransfer'){  
+    else if(type === 'ApproveTransfer'){  
       let nonce = await contract.methods.getNonce(userAddress).call();   
       let functionSignature = await contract.methods.approve(rageContestAddress, amount).encodeABI();
       console.log("7", functionSignature );
@@ -146,7 +140,7 @@ init();
       let nonce2 = (parseInt(nonce) + 1);
       executeMetaTransaction(functionSignature, nonce2);     
     } 
-    else if(type == 'PlayNow'){  
+    else if(type === 'PlayNow'){  
      console.log("PlayNow methods called......");
       let nonce = await contract.methods.getNonce(userAddress).call();   
       let functionSignature = await contract.methods.approve(rageContestAddress, amount).encodeABI();
@@ -156,10 +150,10 @@ init();
         let functionSignature1 =  await contractRageContest.methods.playNow(amount).encodeABI();
         console.log("8", functionSignature1 );
         //let nonce2 = (parseInt(nonce) + 1);
-        let nonce2 = await contractRageContest.methods.getNonce(userAddress).call();         
+        let nonce2 = await contractRageContest.methods.getNonce(userAddress).call();
         await executeRageContestMetaTransaction(functionSignature1, nonce2, true);
     } 
-    else if(type == 'Cancel'){  
+    else if(type === 'Cancel'){  
       console.log("Cancelled methods called......");
       let nonce = await contractRageContest.methods.getNonce(userAddress).call(); 
       ///nonce = (parseInt(nonce) + 1); 
@@ -167,17 +161,17 @@ init();
       console.log("7", functionSignature );
       executeRageContestMetaTransaction(functionSignature, nonce, true);
 
-        // let contracts = await contractRageFactory.methods.getContests().call();
-        // console.log(contracts);       
+        let contracts = await contractRageFactory.methods.getContests().call();
+        console.log(contracts);       
     } 
-    else if(type == 'withdrawfunds'){  
+    else if(type === 'withdrawfunds'){  
       console.log("withdrawfunds methods called......");
       let nonce = await contractRageContest.methods.getNonce(userAddress).call();      
       functionSignature =  await contractRageContest.methods.withdraw(amount).encodeABI();
       console.log("7", functionSignature );
       executeRageContestMetaTransaction(functionSignature, nonce, true); 
     } 
-    else if (type == 'NewContest'){
+    else if (type === 'NewContest'){
       let ragenonce = await contractRageFactory.methods.getNonce(userAddress).call();
 
             let d = new Date();
@@ -334,7 +328,7 @@ init();
               let fee = 50;
               let winningAmount = 60000;
               let isActive = true;
-              let tokenAddress = contractAddress
+              let tokenAddress = "0xdf538eC14801624b06214e9C4dE44b3CD555B374"
 
            contractRageFactory.methods
                     .createNewContest(id, name, starttime, endtime, contesttitle, fee, winningAmount, isActive, tokenAddress)
@@ -398,9 +392,9 @@ init();
   const executeRageContestMetaTransaction = async (functionSignature, nonce, meta) => {
     // const accounts = await web3.eth.getAccounts();
     // let userAddress = accounts[0];
-    if (meta){
     let userAddress = provider.selectedAddress;
-
+    if (meta){
+    
     let message = {};
     message.nonce = parseInt(nonce);
     message.from = userAddress;
@@ -446,8 +440,8 @@ init();
     else{
       console.log("Sending normal transaction");
       contractRageContest.methods
-                    .playNow(amount)
-                    .send({ from: provider.selectedAddress })
+                    .playNow(userAddress, amount)
+                    .send({ from: userAddress })
                     .on("transactionHash", function (hash) {
                         console.log(`Transaction sent to blockchain with hash ${hash}`);
                     })

@@ -1,6 +1,6 @@
 const FACTORY = artifacts.require("./RageFactory.sol");
 const CONTEST = artifacts.require("./RageContest.sol");
-const TOKEN = artifacts.require("./FanTestToken.sol");
+const TOKEN = artifacts.require("./RageToken.sol");
 var Web3 = require('web3');
 
 contract("Factory", async accounts => {
@@ -54,13 +54,18 @@ contract("Factory", async accounts => {
   });
 
   it("Should start the game now", async () => {
-    let playnow =  await newleycreatedGame.playNow(player, Web3.utils.toWei('1','ether'), {from: player});
+    let playnow =  await newleycreatedGame.playNow(Web3.utils.toWei('10','ether'), {from: player});
    // let playnow =  await Token.transferFrom(player, newleycreatedGame.address, Web3.utils.toWei('9','ether'), {from: player});
     assert(playnow);
   });
 
   it("Should cancel the game now", async () => {
     let playnow =  await newleycreatedGame.cancelContest({from: ownerAddress});
+    assert(playnow);
+  });
+
+  it("Should withdraw the fund after cancelled now", async () => {
+    let playnow =  await newleycreatedGame.withdraw( Web3.utils.toWei('10','ether'),  {from: player});
     assert(playnow);
   });
 

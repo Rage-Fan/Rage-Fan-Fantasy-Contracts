@@ -5,13 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "./EIP712MetaTransaction.sol";
 
-contract FanTestToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable  {
+contract RageToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable  {
     uint256 public initialSupply = 1000000000000000000000;
 
     constructor()
         public
         ERC20Detailed("RAGE Token", "TRAGE", 18) 
-        EIP712MetaTransaction("FanTestToken", "1", 80001)
+        EIP712MetaTransaction("RageToken", "1", 80001)
     {           
         _mint(msgSender(), initialSupply);
     }

@@ -47,7 +47,7 @@ contract RageFactory is CloneFactory,  EIP712MetaTransaction {
                                                           _contestFees,
                                                           _winningAmount,
                                                           _isActive,
-                                                          _token, owner); 
+                                                          _token); 
                                
                 contests.push(clone);
 

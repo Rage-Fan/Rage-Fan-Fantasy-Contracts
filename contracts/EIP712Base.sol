@@ -27,7 +27,7 @@ contract EIP712Base {
 		));
     }
 
-    function getChainID() public view returns (uint256 id) {
+    function getChainID() public view returns (uint256) {
 		    return _chainid;
 	}
 

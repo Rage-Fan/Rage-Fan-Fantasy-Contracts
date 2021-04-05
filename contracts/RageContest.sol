@@ -1,11 +1,11 @@
 pragma solidity 0.5.16;
 
 import "./EIP712MetaTransaction.sol";
-import "./FanTestToken.sol";
+import "./RageToken.sol";
 
 contract RageContest is EIP712MetaTransaction {
  
-    FanTestToken private token;
+    RageToken private token;
 
     string public contestId;
     string public name;
@@ -41,7 +41,7 @@ contract RageContest is EIP712MetaTransaction {
     mapping (uint => bool) internal playersList;
 
     mapping (address => uint256) public fundsByParticipants;
-    mapping  (address => uint256 ) public fundsByParticipantsByTeam
+    mapping  (address => mapping (address => uint256) ) public fundsByParticipantsByTeam;
     mapping (address => uint256) public fundsByWinners;
     mapping (address => bool) public participantsList;
 
@@ -57,14 +57,15 @@ contract RageContest is EIP712MetaTransaction {
     /*
     * Contract Constructor
     */
-    constructor(address _adminOwner) 
+    constructor(address _adminOwner, address _token ) 
     public 
     EIP712MetaTransaction("RageContestContract","1", 80001)
     {  
                 name  =   "FirstGameofCricket"; 
                 owner =   _adminOwner;                 
                 canceled = false;
-                settled = false;                     
+                settled = false;  
+                token = RageToken(_token);                    
     }
 
  function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
@@ -72,8 +73,8 @@ contract RageContest is EIP712MetaTransaction {
                 uint256 _contestFees, 
                 uint256 _winningAmount, 
                 bool _isActive,
-                address _token,
-                address from) public {
+                address _token
+                ) public {
                     
         require(bytes(name).length == 0); // ensure not init'd already.
         require(bytes(_name).length > 0);
@@ -86,8 +87,8 @@ contract RageContest is EIP712MetaTransaction {
                 contestFees     =   _contestFees;
                 winningAmount   =   _winningAmount;
                 isActive        =   _isActive;
-                owner = from;            
-                token = FanTestToken(_token); 
+                owner = msgSender();            
+                token = RageToken(_token); 
                 canceled = false;
                 settled = false;  
                 
@@ -97,12 +98,9 @@ contract RageContest is EIP712MetaTransaction {
     emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
   }   
 
-
-
 function withdraw(uint256 _amount)
-        public 
-        onlyEndedOrCanceled
-        returns (bool success)
+        public         
+        returns (bool)
         {
             require(_amount <= fundsByParticipants[msgSender()]);
                 fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
@@ -129,29 +127,10 @@ function withdrawWinningAmount(uint256 _amount)
             return true;
 
         }
-
-function playApprove(address spender, uint256 _value)
-        public        
-        returns (bool success)
-        {
-        
-        require (_value != 0);
-        require (_value > 0);
-        
-        // approve play entry fee to the smart contract 
-        //
-       
-        require(token.balanceOf(spender) > _value);
-        token.approve(spender, _value);
-
-        // other data to be updated
-        emit ApprovePlay(spender);
-        return true;
-    }
-      
-function playNow(address spender, uint256 teamid,  uint256 _value)
-        public        
-        returns (bool success)
+     
+function playNow(uint256 _value)
+        public            
+        returns (bool) 
         {
         
         require (_value != 0);
@@ -159,22 +138,21 @@ function playNow(address spender, uint256 teamid,  uint256 _value)
         
         // transfer play entry fee to the smart contract 
         //       
-        require(token.balanceOf(spender) > _value); 
+        require(token.balanceOf(msgSender()) > _value); 
         //token.approve(spender, _value);
-        token.transferFrom(spender, address(this), _value);   
+        token.transferFrom(msgSender(), address(this), _value);   
 
-        fundsByParticipants[spender] = fundsByParticipants[spender] + _value;
+        fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
 
-        fundsByParticipantsByTeam[spender, teamid] = _value ;
+        //fundsByParticipantsByTeam[msgSender()][teamid] = _value ;
 
         // other data to be updated
-        emit LogPlay(spender);
+        emit LogPlay(msgSender());
         return true;
     }
 
 /*     
-onlyBeforeStart
-        onlyNotCanceled    
+  
 function changeTeam(uint _value)
         public
         onlyBeforeStart
@@ -250,13 +228,9 @@ function changeTeam(uint _value)
     //     {
     //         return contestants;
     //     }
-      /*
-       onlyOwner
-        onlyBeforeEnd
-        onlyNotCanceled
-        */
+      
 function cancelContest()
-        public       
+        public          
         returns (bool success)
     {
         canceled = true;
