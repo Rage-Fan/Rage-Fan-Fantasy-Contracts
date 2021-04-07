@@ -57,17 +57,34 @@ contract RageContest is EIP712MetaTransaction {
     /*
     * Contract Constructor
     */
-    constructor(address _adminOwner, address _token ) 
+    constructor(address _adminOwner, string memory _id, string memory _name,  uint _startTime, uint _endTime, 
+                string memory _contestTitle,
+                uint256 _contestFees, 
+                uint256 _winningAmount, 
+                bool _isActive,
+                address _token ) 
     public 
     EIP712MetaTransaction("RageContestContract","1", 80001)
     {  
-                name  =   "FirstGameofCricket"; 
-                owner =   _adminOwner;                 
+        require(bytes(name).length == 0); // ensure not init'd already.
+        require(bytes(_name).length > 0);
+
+                contestId       =   _id;
+                name            =   _name;
+                startTime       =   _startTime;
+                endTime         =   _endTime;
+                contestTitle    =   _contestTitle;
+                contestFees     =   _contestFees;
+                winningAmount   =   _winningAmount;
+                isActive        =   _isActive;
+                owner = _adminOwner;            
+                token = RageToken(_token); 
                 canceled = false;
-                settled = false;  
-                token = RageToken(_token);                    
+                settled = false;                      
     }
 
+/*
+** not in use
  function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
                 string memory _contestTitle,
                 uint256 _contestFees, 
@@ -93,6 +110,7 @@ contract RageContest is EIP712MetaTransaction {
                 settled = false;  
                 
          }
+*/
 
  function callContest() public {
     emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
@@ -112,11 +130,8 @@ function withdraw(uint256 _amount)
         }
 
 function withdrawWinningAmount(uint256 _amount)
-        public 
-        onlyAfterEnd 
-        onlyNotCanceled
-        onlyAfterSettlement
-        returns (bool success)
+        public         
+        returns (bool)
         {
             require(_amount <= fundsByParticipants[msgSender()]);
             fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
@@ -230,7 +245,8 @@ function changeTeam(uint _value)
     //     }
       
 function cancelContest()
-        public          
+        public  
+        onlyOwner        
         returns (bool success)
     {
         canceled = true;
@@ -238,8 +254,6 @@ function cancelContest()
         emit ContestCanceled();
         return true;
     }
-
-
 
     modifier onlyAfterStart()  {
         require (block.timestamp > startTime) ;
