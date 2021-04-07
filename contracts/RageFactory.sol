@@ -42,13 +42,14 @@ contract RageFactory is CloneFactory,  EIP712MetaTransaction {
                             public  {
 
                    RageContest clone = RageContest(createClone(libraryAddress));
+                   /*
                    clone.init(_id, _name, _startTime, _endTime,
                                                           _contestTitle,
                                                           _contestFees,
                                                           _winningAmount,
                                                           _isActive,
                                                           _token); 
-                               
+                    */          
                 contests.push(clone);
 
                 emit ContestCreated(_name, address(clone));

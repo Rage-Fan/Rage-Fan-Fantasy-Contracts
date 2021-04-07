@@ -66,6 +66,7 @@ contract RageContest is EIP712MetaTransaction {
     public 
     EIP712MetaTransaction("RageContestContract","1", 80001)
     {  
+        //Used constructor
         require(bytes(name).length == 0); // ensure not init'd already.
         require(bytes(_name).length > 0);
 
