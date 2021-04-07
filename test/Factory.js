@@ -15,7 +15,7 @@ contract("Factory", async accounts => {
   let amount =  "15000000000000000000";
   before(async () => {
     Token = await TOKEN.new();
-    Contest = await CONTEST.new(ownerAddress);
+    Contest = await CONTEST.new(ownerAddress, Token.address);
     Factory = await FACTORY.new(ownerAddress, Contest.address);
 
     newgameContest = await Factory.createNewContest("1022", "INDVSENG1022", 1617268195, 1618045795, "WinnersTakeAll", 35, 7000, true, Token.address )

@@ -13,18 +13,18 @@ module.exports = function(deployer, network, accounts) {
      
      const ownerAddress = '0x508D3a0E42f04B1103e3684972A45F29C53d785b';
      const tokenAddress = "0xb17A9A058F05573bF820601E3A6CC968bE39b495"
-     //const ownerAddress = accounts[0];
+    // const ownerAddress = accounts[0];
 
     //  await deployer.deploy(rageToken);
-    //  const token  = await rageToken.deployed();
+     // const token  = await rageToken.deployed();
 
-      await deployer.deploy(rageContest, ownerAddress, tokenAddress);
+      await deployer.deploy(rageContest, ownerAddress, token.address);
 
       const libarayAddress = await rageContest.deployed();
 
-      await deployer.deploy(rageFactory, ownerAddress, libarayAddress.address );
+      // await deployer.deploy(rageFactory, ownerAddress, libarayAddress.address );
 
-      const rageFactoryContract = await rageFactory.deployed();
+      // const rageFactoryContract = await rageFactory.deployed();
       
     } catch (err) {
       console.log(('Failed to Deploy Contracts', err))
