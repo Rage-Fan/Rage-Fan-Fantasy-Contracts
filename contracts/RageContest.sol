@@ -41,15 +41,18 @@ contract RageContest is EIP712MetaTransaction {
     mapping (uint => bool) internal playersList;
 
     mapping (address => uint256) public fundsByParticipants;
-    mapping  (address => mapping (address => uint256) ) public fundsByParticipantsByTeam;
-    mapping (address => uint256) public fundsByWinners;
-    mapping (address => bool) public participantsList;
+    mapping (uint256 => uint256) public fundsByWinnersByTeam;  //id - amount
+    mapping (uint256 => address) public winnersTeamIDAddress;  //id - walletaddress
+  
+    mapping (uint256 => bool) public participantsByTeam;  // teamid - bool
 
     event ContestCanceled();
     event LogPlay(address player);
     event ApprovePlay(address player);
      
+    event WinnersDataUpdated();
     event PlayerDataUpdated();
+    
     event LogWithdrawal(address withdrawer,  uint amount);
 
     event ContestCreatedEvent(address sender, string  _id, string  _name,  uint _startTime, uint _endTime, 
@@ -84,40 +87,12 @@ contract RageContest is EIP712MetaTransaction {
                 settled = false;                      
     }
 
-/*
-** not in use
- function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
-                string memory _contestTitle,
-                uint256 _contestFees, 
-                uint256 _winningAmount, 
-                bool _isActive,
-                address _token
-                ) public {
-                    
-        require(bytes(name).length == 0); // ensure not init'd already.
-        require(bytes(_name).length > 0);
-
-                contestId       =   _id;
-                name            =   _name;
-                startTime       =   _startTime;
-                endTime         =   _endTime;
-                contestTitle    =   _contestTitle;
-                contestFees     =   _contestFees;
-                winningAmount   =   _winningAmount;
-                isActive        =   _isActive;
-                owner = msgSender();            
-                token = RageToken(_token); 
-                canceled = false;
-                settled = false;  
-                
-         }
-*/
-
  function callContest() public {
     emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
   }   
 
-function withdraw(uint256 _amount)
+
+function withdraw(uint256 _amount, uint256 _teamId)
         public         
         returns (bool)
         {
@@ -125,6 +100,7 @@ function withdraw(uint256 _amount)
                 fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
             
             require(token.transfer(msgSender(), _amount));
+            participantsByTeam[_teamId] = false;
 
             emit LogWithdrawal(msgSender(), _amount);
             return true;
@@ -144,7 +120,7 @@ function withdrawWinningAmount(uint256 _amount)
 
         }
      
-function playNow(uint256 _value)
+function playNow(uint256 _value, uint256 _teamId)
         public            
         returns (bool) 
         {
@@ -159,6 +135,7 @@ function playNow(uint256 _value)
         token.transferFrom(msgSender(), address(this), _value);   
 
         fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
+        participantsByTeam[_teamId] = true;
 
         //fundsByParticipantsByTeam[msgSender()][teamid] = _value ;
 
@@ -167,42 +144,28 @@ function playNow(uint256 _value)
         return true;
     }
 
-/*     
-  
-function changeTeam(uint _value)
-        public
-        onlyBeforeStart
-        onlyNotCanceled
-        returns (bool success)
-        {
-        
-        emit ChangeTeamDone();
-        return true;
-    }
-*/
-
-/*
- function updateWinningData(address[] memory _winners, uint256[] memory _amount)
+function updateWinningData(address[] memory _winners, uint256[] memory _teamId, uint256[] memory _amount)
         public
         onlyOwner
         onlyAfterEnd
         onlyNotCanceled
         returns (bool success)
     {
-        
         // update the winning address with
         // winning amount 
         // and playid 
         // since more than one play is possible from
         // the same address 
-        
-        
+           
         for (uint i=0; i<_winners.length; i++) {
-            address _winner = _winners[i];
+            address winner = _winners[i];
+            uint256 teamId = _teamId[i];
+            uint256 amount = _amount[i];
 
-            if(participantsList[_winner]) {
+            if(participantsByTeam[teamId]) {
                 // participantsList[_playerId].points =  _points[i]; 
-                fundsByWinners[_winner] = 
+                fundsByWinnersByTeam[teamId] = amount;
+                winnersTeamIDAddress[teamId] = winner;
 
             }
         }
@@ -211,8 +174,7 @@ function changeTeam(uint _value)
         emit WinnersDataUpdated();
         return true;
     }
- */
-
+    
  function updatePlayerPoints(uint[] memory _playerIds, uint[] memory _points)
         public
         onlyOwner
@@ -237,6 +199,25 @@ function changeTeam(uint _value)
     }
 
 
+
+/*     
+  
+function changeTeam(uint _value)
+        public
+        onlyBeforeStart
+        onlyNotCanceled
+        returns (bool success)
+        {
+        
+        emit ChangeTeamDone();
+        return true;
+    }
+*/
+
+/*
+ 
+ */
+
     // function getContestants ()
     //     view
     //     public
@@ -244,13 +225,19 @@ function changeTeam(uint _value)
     //     {
     //         return contestants;
     //     }
-      
-function cancelContest()
+
+
+//
+// status = true - if cancelled
+// status = false - if not cancelled 
+//    
+
+function cancelContest(bool status)
         public  
         onlyOwner        
         returns (bool success)
     {
-        canceled = true;
+        canceled = status;
 
         emit ContestCanceled();
         return true;
@@ -270,12 +257,6 @@ function cancelContest()
         require (!canceled);
         _;
     }
-
-
-    //     modifier onlyOwner() {
-    //     require(_owner == _msgSender(), "Ownable: caller is not the owner");
-    //     _;
-    // }
 
     modifier onlyBeforeEnd()  {
         require (block.timestamp < endTime) ;
@@ -301,5 +282,4 @@ function cancelContest()
         assert (msgSender() == owner) ;
         _;
     }
-
 }
