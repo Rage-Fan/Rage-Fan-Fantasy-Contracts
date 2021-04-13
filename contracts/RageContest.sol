@@ -106,15 +106,22 @@ function withdraw(uint256 _amount, uint256 _teamId)
             return true;
         }
 
-function withdrawWinningAmount(uint256 _amount)
+function withdrawWinningAmount(uint256 _amount, uint256 _teamId)
         public         
         returns (bool)
         {
-            require(_amount <= fundsByParticipants[msgSender()]);
-            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
-            
-            require(token.transfer(msgSender(), _amount));
+            require( _amount <= fundsByWinnersByTeam[_teamId] );
+            require( _teamId <= winnersTeamIDAddress[msgSender()] );
 
+            
+            if(participantsByTeam[teamId]) {
+                fundsByWinnersByTeam[teamId] = amount;
+                winnersTeamIDAddress[teamId] = winner;
+            }
+
+            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
+                        
+            require(token.transfer(msgSender(), _amount));
             emit LogWithdrawal(msgSender(), _amount);
             return true;
 
@@ -129,48 +136,33 @@ function playNow(uint256 _value, uint256 _teamId)
         require (_value > 0);
         
         // transfer play entry fee to the smart contract 
-        //       
         require(token.balanceOf(msgSender()) > _value); 
-        //token.approve(spender, _value);
         token.transferFrom(msgSender(), address(this), _value);   
 
         fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
         participantsByTeam[_teamId] = true;
 
-        //fundsByParticipantsByTeam[msgSender()][teamid] = _value ;
-
-        // other data to be updated
         emit LogPlay(msgSender());
         return true;
     }
 
-function updateWinningData(address[] memory _winners, uint256[] memory _teamId, uint256[] memory _amount)
+function updateWinnersData(address[] memory _winners, uint256[] memory _teamId, uint256[] memory _amount)
         public
         onlyOwner
-        onlyAfterEnd
-        onlyNotCanceled
+        // onlyAfterEnd
+        // onlyNotCanceled
         returns (bool success)
-    {
-        // update the winning address with
-        // winning amount 
-        // and playid 
-        // since more than one play is possible from
-        // the same address 
-           
+    {      
         for (uint i=0; i<_winners.length; i++) {
             address winner = _winners[i];
             uint256 teamId = _teamId[i];
             uint256 amount = _amount[i];
 
             if(participantsByTeam[teamId]) {
-                // participantsList[_playerId].points =  _points[i]; 
                 fundsByWinnersByTeam[teamId] = amount;
                 winnersTeamIDAddress[teamId] = winner;
-
             }
         }
-      
-
         emit WinnersDataUpdated();
         return true;
     }
@@ -197,7 +189,6 @@ function updateWinningData(address[] memory _winners, uint256[] memory _teamId, 
         emit PlayerDataUpdated();
         return true;
     }
-
 
 
 /*     
