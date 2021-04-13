@@ -34,12 +34,12 @@ module.exports = {
       },
       matic: {
           provider: function() { 
-             return new HDWalletProvider(mnemonic, 'https://rpc-mumbai.matic.today') 
+             return new HDWalletProvider(mnemonic, 'https://rpc-mumbai.maticvigil.com/') 
             },
             network_id: '80001',
             gasPrice: '1000000000',
             confirmations: 5,
-            timeoutBlocks: 200,
+        //    timeoutBlocks: 200,
             skipDryRun: false
       },    
       // ropsten: {

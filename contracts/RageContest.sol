@@ -111,17 +111,11 @@ function withdrawWinningAmount(uint256 _amount, uint256 _teamId)
         returns (bool)
         {
             require( _amount <= fundsByWinnersByTeam[_teamId] );
-            require( _teamId <= winnersTeamIDAddress[msgSender()] );
-
-            
-            if(participantsByTeam[teamId]) {
-                fundsByWinnersByTeam[teamId] = amount;
-                winnersTeamIDAddress[teamId] = winner;
-            }
-
-            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
+            require( msgSender() <= winnersTeamIDAddress[_teamId] );
                         
             require(token.transfer(msgSender(), _amount));
+            fundsByWinnersByTeam[_teamId] = 0;
+
             emit LogWithdrawal(msgSender(), _amount);
             return true;
 
