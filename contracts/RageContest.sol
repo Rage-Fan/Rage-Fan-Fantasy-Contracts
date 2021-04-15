@@ -35,7 +35,7 @@ contract RageContest is EIP712MetaTransaction {
         uint256 points;
         string captain; //C,VC,P
     }
-
+    uint256[] public tempArray;
     mapping(uint256 => Player) public playersData;
     mapping(uint256 => bool) internal playersList;
 
@@ -122,7 +122,7 @@ contract RageContest is EIP712MetaTransaction {
         return true;
     }
 
-    function withdrawAdmin(uint256 _teamId, address _participant)
+    function withdrawAdmin(uint256 _amount, address _receiver)
         public
         onlyOwner
         returns (bool)
@@ -132,10 +132,9 @@ contract RageContest is EIP712MetaTransaction {
         //     fundsByParticipants[msgSender()] -
         //     _amount;
 
-        require(token.transfer(_participant, fundByParticipantTeam[_teamId]));
-        participantsByTeam[_teamId] = false;
+        require(token.transfer(_receiver, _amount));
 
-        emit LogWithdrawal(msgSender(), _amount);
+        // emit LogWithdrawal(msgSender());
         return true;
     }
 
@@ -153,6 +152,10 @@ contract RageContest is EIP712MetaTransaction {
         return true;
     }
 
+    function lengthTempArray() public view returns (uint256) {
+        return tempArray.length;
+    }
+
     function playNow(uint256 _value, uint256 _teamId) public returns (bool) {
         require(_value != 0);
         require(_value > 0);
@@ -160,6 +163,7 @@ contract RageContest is EIP712MetaTransaction {
         // transfer play entry fee to the smart contract
         require(token.balanceOf(msgSender()) > _value);
         token.transferFrom(msgSender(), address(this), _value);
+
 
         fundByParticipantTeam[_teamId] = _value;
 
@@ -248,6 +252,8 @@ contract RageContest is EIP712MetaTransaction {
         emit PlayerDataUpdated();
         return true;
     }
+
+
 
     /*     
   

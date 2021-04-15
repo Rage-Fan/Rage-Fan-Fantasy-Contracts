@@ -24,7 +24,7 @@ Web3 = require('web3')
 const web3 = new Web3(new Web3.providers.HttpProvider("https://rpc-mumbai.maticvigil.com/"));
 
 //web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io"));
-var contractAddress = "0x333B8E1f5A785e373579d8D25c10DaD990742cFA"
+var contractAddress = "0x29Fce8F6c11210E8592074F416B01Ea347EA52cA"
 //"0x7aAeE0875C13494c72D16443A968821a03aF94B1";
 var abiDefinition = [
   {
@@ -371,6 +371,27 @@ var abiDefinition = [
     "constant": true,
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundByParticipantTeam",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -682,6 +703,27 @@ var abiDefinition = [
         "type": "uint256"
       }
     ],
+    "name": "tempArray",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "name": "winnersTeamIDAddress",
     "outputs": [
       {
@@ -749,6 +791,32 @@ var abiDefinition = [
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_participant",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawAdmin",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
       },
@@ -768,6 +836,21 @@ var abiDefinition = [
     ],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "lengthTempArray",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -819,7 +902,7 @@ var abiDefinition = [
     "outputs": [
       {
         "internalType": "bool",
-        "name": "success",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -960,6 +1043,7 @@ app.get('/cancel', function (req, res) {
 
   res.json(smartContract.settled())
 });
+
 app.get('/showOwner', function (req, res) {
   // true - cancel contrct
   // false - not cancelled
@@ -1052,6 +1136,65 @@ app.get('/updateWinnersData', function (req, res) {
     }
   })
 
+});
+app.get('/getParticipantData', function (req, res) {
+
+  let response = [];
+
+  let length = smartContract.listParticipantsCount();
+  for (let i = 0; i < length; i++) {
+    let teamId = smartContract.participantAtIndex(i);
+
+    let participantDataByTeamId = smartContract.getParticipantData(teamId);
+    response.push(participantDataByTeamId);
+    console.log("Participant Data", participantDataByTeamId);
+  }
+
+  console.log(response);
+
+  res.json(smartContract.getWinnerData(1003));
+});
+
+app.get('/playNow', function (req, res) {
+  const Tx = require('ethereumjs-tx');
+
+  let sender = "0x508d3a0e42f04b1103e3684972a45f29c53d785b";
+  const privatekey = '7aa1abed6634e14fbcbdfbce6f7100be17574d8a82a7c9698d7b04b214aaec01';
+  var secret = new Buffer(privatekey, 'hex');
+
+  let value = 100000000;
+  let teamId = 1000;
+
+  var rawTransaction = {
+    "nonce": web3.toHex(web3.eth.getTransactionCount(sender)),
+    "gasPrice": 1000000000,
+    "gasLimit": 100000,
+    "to": contractAddress,
+    data: smartContract.playNow.getData(value, teamId, { from: sender }),
+    chainId: 80001
+  }
+
+  var tx = new Tx(rawTransaction);
+  tx.sign(secret);
+
+  var serializedTx = tx.serialize();
+  var sendString = serializedTx.toString('hex');
+  web3.eth.sendRawTransaction(`0x${sendString}`, function (err, result) {
+    if (!err) {
+      var txhas = result;
+      console.log(txhas);
+      res.json({ status: 'Success', recepit: result })
+    } else {
+      console.log("err", err)
+      res.json({ status: 'Failure', recepit: null })
+    }
+  })
+});
+
+app.get('/lengthTempArray', function (req, res) {
+  // true - cancel contrct
+  // false - not cancelled
+  res.json(smartContract.lengthTempArray());
 });
 
 
