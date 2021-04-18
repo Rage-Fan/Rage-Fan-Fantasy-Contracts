@@ -28,7 +28,7 @@ let sender = config.sender;
 
 const privatekey = config.privatekey;
 
-var secret = new Buffer(privatekey, 'hex');
+var secret = new Buffer.from(privatekey, 'hex');
 
 var rageContestAbi = require('./rageContestAbi.json');
 
