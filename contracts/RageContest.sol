@@ -15,11 +15,6 @@ contract RageContest is EIP712MetaTransaction {
     bool public isActive;
     address public owner;
 
-    Player[] public players;
-
-    uint256 public prizePool;
-    uint256 public decimals;
-
     uint256 public maxContestants;
     uint256 public minContestants;
     uint256 public startTime;
@@ -29,15 +24,12 @@ contract RageContest is EIP712MetaTransaction {
     address public player;
     address[] public contestants;
 
-    struct Player {
-        string id;
-        string name;
-        uint256 points;
-        string captain; //C,VC,P
-    }
-    uint256[] public tempArray;
-    mapping(uint256 => Player) public playersData;
-    mapping(uint256 => bool) internal playersList;
+    // struct Player {
+    //     string id;
+    //     string name;
+    //     uint256 points;
+    //     string captain; //C,VC,P
+    // }
 
     mapping(address => uint256) public fundsByParticipants;
     mapping(uint256 => uint256) public fundsByWinnersByTeam; //id - amount
@@ -122,17 +114,8 @@ contract RageContest is EIP712MetaTransaction {
         return true;
     }
 
-    function withdrawAdmin(uint256 _amount, address _receiver)
-        public
-        onlyOwner
-        returns (bool)
-    {
-        // require(_amount <= fundsByParticipants[msgSender()]);
-        // fundsByParticipants[msgSender()] =
-        //     fundsByParticipants[msgSender()] -
-        //     _amount;
-
-        require(token.transfer(_receiver, _amount));
+    function withdrawAdmin(address _receiver) public onlyOwner returns (bool) {
+        require(token.transfer(_receiver, token.balanceOf(address(this))));
 
         // emit LogWithdrawal(msgSender());
         return true;
@@ -152,10 +135,6 @@ contract RageContest is EIP712MetaTransaction {
         return true;
     }
 
-    function lengthTempArray() public view returns (uint256) {
-        return tempArray.length;
-    }
-
     function playNow(uint256 _value, uint256 _teamId) public returns (bool) {
         require(_value != 0);
         require(_value > 0);
@@ -163,7 +142,6 @@ contract RageContest is EIP712MetaTransaction {
         // transfer play entry fee to the smart contract
         require(token.balanceOf(msgSender()) > _value);
         token.transferFrom(msgSender(), address(this), _value);
-
 
         fundByParticipantTeam[_teamId] = _value;
 
@@ -177,9 +155,9 @@ contract RageContest is EIP712MetaTransaction {
     }
 
     function updateWinnerData(
-        address _winners,
-        uint256 _teamId,
-        uint256 _amount
+        address[] memory _winner,
+        uint256[] memory _teamId,
+        uint256[] memory _amount
     )
         public
         onlyOwner
@@ -189,38 +167,16 @@ contract RageContest is EIP712MetaTransaction {
             bool
         )
     {
-        fundsByWinnersByTeam[_teamId] = _amount;
-        winnersTeamIDAddress[_teamId] = _winners;
-
-        require(token.transfer(_winners, _amount));
-
-        emit WinnersDataUpdated();
-        return true;
-    }
-
-    function updateWinnersData(
-        address[] memory _winners,
-        uint256[] memory _teamId,
-        uint256[] memory _amount
-    )
-        public
-        onlyOwner
-        returns (
-            // onlyAfterEnd
-            // onlyNotCanceled
-            bool success
-        )
-    {
-        for (uint256 i = 0; i < _winners.length; i++) {
-            address winner = _winners[i];
-            uint256 teamId = _teamId[i];
-            uint256 amount = _amount[i];
-
-            // if(participantsByTeam[teamId]) {
-            fundsByWinnersByTeam[teamId] = amount;
-            winnersTeamIDAddress[teamId] = winner;
-            // }
+        require(_winner.length == _teamId.length, "Length Doesn't Match.");
+        require(_teamId.length == _amount.length, "Length Doesn't Match.");
+        for (uint256 i = 0; i < _winner.length; i++) {
+            if (participantsByTeam[_teamId[i]]) {
+                fundsByWinnersByTeam[_teamId[i]] = _amount[i] * 1e18;
+                winnersTeamIDAddress[_teamId[i]] = _winner[i];
+                require(token.transfer(_winner[i], _amount[i] * 1e18));
+            }
         }
+
         emit WinnersDataUpdated();
         return true;
     }
@@ -233,27 +189,79 @@ contract RageContest is EIP712MetaTransaction {
         return (winnersTeamIDAddress[_teamId], fundsByWinnersByTeam[_teamId]);
     }
 
-    function updatePlayerPoints(
-        uint256[] memory _playerIds,
-        uint256[] memory _points
-    ) public onlyOwner onlyAfterEnd onlyNotCanceled returns (bool success) {
-        //
-        // update player points
-        //
+    struct PlayerPoint {
+        uint256[] playerId;
+        uint256[] point;
+    }
+    mapping(uint256 => PlayerPoint) particpant;
 
-        for (uint256 i = 0; i < _playerIds.length; i++) {
-            uint256 _playerId = _playerIds[i];
+    uint256[] public playersId;
+    uint256[] public points;
 
-            if (playersList[_playerId]) {
-                playersData[_playerId].points = _points[i];
-            }
+    function setPlayerPoint(
+        uint256[] memory _player,
+        uint256[] memory _point,
+        uint256 _matchId
+    ) public onlyOwner returns (bool) {
+        require(msg.sender == owner);
+        for (uint256 i = 0; i < _player.length; i++) {
+            playersId.push(_player[i]);
+            points.push(_point[i]);
         }
 
-        emit PlayerDataUpdated();
+        particpant[_matchId].playerId = playersId;
+        particpant[_matchId].point = points;
         return true;
     }
 
+    function getPlayerPoint(uint256 _matchId)
+        public
+        view
+        returns (uint256[] memory, uint256[] memory)
+    {
+        return (particpant[_matchId].playerId, particpant[_matchId].point);
+    }
 
+    struct TeamData {
+        uint256[] playerId;
+        address particpant;
+        uint256 teamId;
+    }
+
+    mapping(uint256 => TeamData) playerData;
+
+    function setTeamData(
+        uint256[] memory _player,
+        address _particpant,
+        uint256 _teamId,
+        uint256 _trx
+    ) public onlyOwner returns (bool) {
+        require(msg.sender == owner);
+        for (uint256 i = 0; i < _player.length; i++) {
+            playersId.push(_player[i]);
+        }
+
+        playerData[_trx].playerId = playersId;
+        playerData[_trx].particpant = _particpant;
+        playerData[_trx].teamId = _teamId;
+        return true;
+    }
+
+    function getTeamData(uint256 _trx)
+        public
+        view
+        returns (
+            uint256[] memory,
+            address,
+            uint256
+        )
+    {
+        return (
+            playerData[_trx].playerId,
+            playerData[_trx].particpant,
+            playerData[_trx].teamId
+        );
+    }
 
     /*     
   
@@ -286,11 +294,7 @@ function changeTeam(uint _value)
     // status = false - if not cancelled
     //
 
-    function cancelContest(bool status)
-        public
-        onlyOwner
-        returns (bool success)
-    {
+    function cancelContest(bool status) public onlyOwner returns (bool) {
         canceled = status;
 
         emit ContestCanceled();

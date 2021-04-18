@@ -18,7 +18,7 @@ module.exports = function(deployer, network, accounts) {
     //  await deployer.deploy(rageToken);
      // const token  = await rageToken.deployed();
 
-      await deployer.deploy(rageContest, ownerAddress, "56", "MumbaiIPL", 1617268195, 1618045795, "WinnersTakeAll", 35, 7000, true, tokenAddress);
+      await deployer.deploy(rageContest, ownerAddress, "59", "140 Trage", 1618491600, 1618495200000, "Oeiras vs Miranda Dragons (Safe)", 10, 140, true, tokenAddress);
 
       const libarayAddress = await rageContest.deployed();
 

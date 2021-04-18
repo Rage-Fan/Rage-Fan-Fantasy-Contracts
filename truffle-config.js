@@ -34,7 +34,7 @@ module.exports = {
       },
       matic: {
           provider: function() { 
-             return new HDWalletProvider(mnemonic, 'https://rpc-mumbai.maticvigil.com/') 
+             return new HDWalletProvider(mnemonic, 'https://rpc-mumbai.maticvigil.com/v1/3318488deee982b52a9b1d1d7d9751725f1d3b29') 
             },
             network_id: '80001',
             gasPrice: '1000000000',
