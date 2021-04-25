@@ -271,6 +271,21 @@
   {
     "constant": true,
     "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
     "name": "endTime",
     "outputs": [
       {
@@ -543,12 +558,27 @@
         "type": "uint256"
       }
     ],
-    "name": "playersId",
+    "name": "players",
     "outputs": [
       {
+        "internalType": "string",
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
         "internalType": "uint256",
-        "name": "",
+        "name": "points",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "captain",
+        "type": "string"
       }
     ],
     "payable": false,
@@ -564,7 +594,37 @@
         "type": "uint256"
       }
     ],
-    "name": "points",
+    "name": "playersData",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "id",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "points",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "captain",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "prizePool",
     "outputs": [
       {
         "internalType": "uint256",
@@ -595,6 +655,27 @@
     "constant": true,
     "inputs": [],
     "name": "startTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "tempArray",
     "outputs": [
       {
         "internalType": "uint256",
@@ -682,7 +763,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "value",
+        "name": "_amount",
         "type": "uint256"
       },
       {
@@ -730,6 +811,21 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "lengthTempArray",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -759,8 +855,39 @@
     "constant": false,
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_winners",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_teamId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateWinnerData",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "internalType": "address[]",
-        "name": "_winner",
+        "name": "_winners",
         "type": "address[]"
       },
       {
@@ -774,11 +901,11 @@
         "type": "uint256[]"
       }
     ],
-    "name": "updateWinnerData",
+    "name": "updateWinnersData",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
@@ -817,123 +944,25 @@
     "inputs": [
       {
         "internalType": "uint256[]",
-        "name": "_player",
+        "name": "_playerIds",
         "type": "uint256[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "_point",
+        "name": "_points",
         "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_matchId",
-        "type": "uint256"
       }
     ],
-    "name": "setPlayerPoint",
+    "name": "updatePlayerPoints",
     "outputs": [
       {
         "internalType": "bool",
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_matchId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPlayerPoint",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "_player",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "address",
-        "name": "_particpant",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_teamId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_trx",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTeamData",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_trx",
-        "type": "uint256"
-      }
-    ],
-    "name": "getTeamData",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -949,7 +978,7 @@
     "outputs": [
       {
         "internalType": "bool",
-        "name": "",
+        "name": "success",
         "type": "bool"
       }
     ],

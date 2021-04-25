@@ -114,8 +114,8 @@ contract RageContest is EIP712MetaTransaction {
         return true;
     }
 
-    function withdrawAdmin(address _receiver) public onlyOwner returns (bool) {
-        require(token.transfer(_receiver, token.balanceOf(address(this))));
+    function withdrawAdmin(uint256 value,address _receiver) public onlyOwner returns (bool) {
+        require(token.transfer(_receiver, value));
 
         // emit LogWithdrawal(msgSender());
         return true;
@@ -170,11 +170,11 @@ contract RageContest is EIP712MetaTransaction {
         require(_winner.length == _teamId.length, "Length Doesn't Match.");
         require(_teamId.length == _amount.length, "Length Doesn't Match.");
         for (uint256 i = 0; i < _winner.length; i++) {
-            if (participantsByTeam[_teamId[i]]) {
+            // if (participantsByTeam[_teamId[i]]) {
                 fundsByWinnersByTeam[_teamId[i]] = _amount[i] * 1e18;
                 winnersTeamIDAddress[_teamId[i]] = _winner[i];
                 require(token.transfer(_winner[i], _amount[i] * 1e18));
-            }
+            // }
         }
 
         emit WinnersDataUpdated();
