@@ -562,4 +562,4 @@ contract ERC20 is Context, IERC20 {
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 }
 
-contract RageToken is ERC20("RageToken", "RAGE") { }
+contract RageToken is ERC20("RAGEMATIC (PoS)", "RAGE") { }
