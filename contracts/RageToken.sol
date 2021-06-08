@@ -5,7 +5,8 @@
 
 pragma solidity ^0.6.0;
 
-import "./EIP712Base.sol";
+//import "./EIP712Base.sol";
+import "./EIP712MetaTransaction.sol";
 import "./SafeMath.sol";
 
 /*
