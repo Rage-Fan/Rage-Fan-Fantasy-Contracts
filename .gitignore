@@ -75,6 +75,9 @@ typings/
 # Output of 'npm pack'
 *.tgz
 
+# Seceret File 
+secret.js
+
 # Yarn Integrity file
 .yarn-integrity
 

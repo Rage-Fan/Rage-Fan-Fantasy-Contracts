@@ -20,8 +20,6 @@ const web3 = new Web3();
 
 const config = require("./secret");
 
-//const PrivateKeyProvider = require("@truffle/hdwallet-provider");
-//const privateKey = "efbe463639c2a70be3371e846baee0240a9ae1ba0d67d51b30ea62ca8117cc7e";
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>

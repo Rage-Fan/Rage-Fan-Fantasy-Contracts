@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.5.16;
 
 import "./EIP712MetaTransaction.sol";
 import {RageToken} from "./RageToken.sol";
@@ -9,35 +9,37 @@ contract RageContest is EIP712MetaTransaction {
     string public contestId;
     string public name;
     string public contestTitle;
-    uint256 public contestFees;
-    uint256 public winningAmount;
+    uint256 public contestFee;
 
-    bool public isActive;
     address public owner;
+    address public creator;
 
-    // Player[] public players;
+    uint256 public minimumPlayers;
+    uint256 public maximumPlayers;
 
-    uint256 public prizePool;
-    uint256 public decimals;
-
-    uint256 public maxContestants;
-    uint256 public minContestants;
     uint256 public startTime;
     uint256 public endTime;
-    bool public canceled;
-    bool public settled;
-    address public player;
     address[] public contestants;
 
-    struct Player {
-        string id;
-        string name;
-        uint256 points;
-        string captain; //C,VC,P
+    uint256[] public teamList;
+
+    struct PlayerPoint {
+        uint256[] playerId;
+        uint256[] point;
+    }
+    mapping(uint256 => PlayerPoint) particpant;
+
+    struct TeamData {
+        uint256[] playerId;
+        address particpant;
+        uint256 teamId;
     }
 
-    mapping(uint256 => Player) public playersData;
-    mapping(uint256 => bool) internal playersList;
+    mapping(uint256 => TeamData) playerData;
+
+    uint256[] public playersId;
+    uint256[] public points;
+
 
     mapping(address => uint256) public fundsByParticipants;
     mapping(uint256 => uint256) public fundsByWinnersByTeam; //id - amount
@@ -45,14 +47,7 @@ contract RageContest is EIP712MetaTransaction {
 
     mapping(uint256 => bool) public participantsByTeam; // teamid - bool
 
-    event ContestCanceled();
     event LogPlay(address player);
-    event ApprovePlay(address player);
-
-    event WinnersDataUpdated();
-    event PlayerDataUpdated();
-
-    event LogWithdrawal(address withdrawer, uint256 amount);
 
     event ContestCreatedEvent(
         address sender,
@@ -68,14 +63,15 @@ contract RageContest is EIP712MetaTransaction {
      */
     constructor(
         address _adminOwner,
+        address _creator,
         string memory _id,
         string memory _name,
         uint256 _startTime,
         uint256 _endTime,
         string memory _contestTitle,
-        uint256 _contestFees,
-        uint256 _winningAmount,
-        bool _isActive,
+        uint256 _contestFee,
+        uint256 _minimumPlayer,
+        uint256 _maximumPlayer,
         address _token
     ) public EIP712MetaTransaction("RageContestContract", "1", 137) {
         //Used constructor
@@ -87,16 +83,12 @@ contract RageContest is EIP712MetaTransaction {
         startTime = _startTime;
         endTime = _endTime;
         contestTitle = _contestTitle;
-        contestFees = _contestFees;
-        winningAmount = _winningAmount;
-        isActive = _isActive;
+        contestFee = _contestFee;
+        creator = _creator;
         owner = _adminOwner;
+        minimumPlayers = _minimumPlayer;
+        maximumPlayers = _maximumPlayer;
         token = RageToken(_token);
-        canceled = false;
-        settled = false;
-    }
-
-    function callContest() public {
         emit ContestCreatedEvent(
             address(this),
             contestId,
@@ -107,55 +99,24 @@ contract RageContest is EIP712MetaTransaction {
         );
     }
 
-    function withdraw(uint256 _amount, uint256 _teamId) public returns (bool) {
-        require(_amount <= fundsByParticipants[msgSender()]);
-        fundsByParticipants[msgSender()] =
-            fundsByParticipants[msgSender()] -
-            _amount;
-
-        require(token.transfer(msgSender(), _amount));
-        participantsByTeam[_teamId] = false;
-
-        emit LogWithdrawal(msgSender(), _amount);
-        return true;
-    }
-
-    function withdrawAdmin(uint256 value, address _receiver)
-        public
-        onlyOwner
-        returns (bool)
-    {
+    function withdrawAdmin(uint256 value, address _receiver) public onlyOwner {
         require(token.transfer(_receiver, value));
-
-        // emit LogWithdrawal(msgSender());
-        return true;
     }
 
-    function withdrawWinningAmount(uint256 _amount, uint256 _teamId)
-        public
-        returns (bool)
-    {
-        require(_amount <= fundsByWinnersByTeam[_teamId]);
-        require(msgSender() <= winnersTeamIDAddress[_teamId]);
-
-        require(token.transfer(msgSender(), _amount));
-        fundsByWinnersByTeam[_teamId] = 0;
-
-        emit LogWithdrawal(msgSender(), _amount);
-        return true;
-    }
 
     function playNow(uint256 _value, uint256 _teamId) public returns (bool) {
-        require(_value != 0);
-        require(_value > 0);
-
+        require(_value == contestFee);
+        require(!participantsByTeam[_teamId]);
+        require(maximumPlayers < teamList.length);
         // transfer play entry fee to the smart contract
-        require(token.balanceOf(msgSender()) > _value);
-        token.transferFrom(msgSender(), address(this), _value);
+        require(token.balanceOf(msgSender()) > contestFee);
+        token.transferFrom(msgSender(), address(this), contestFee);
+        
+        teamList.push(_teamId);
 
         fundsByParticipants[msgSender()] =
             fundsByParticipants[msgSender()] +
-            _value;
+            contestFee;
         participantsByTeam[_teamId] = true;
 
         emit LogPlay(msgSender());
@@ -169,23 +130,43 @@ contract RageContest is EIP712MetaTransaction {
     )
         public
         onlyOwner
+        onlyAfterEnd
         returns (
-            // onlyAfterEnd
-            // onlyNotCanceled
             bool
         )
     {
+        require(minimumPlayers >= teamList.length, "Not Enough Team Registerd");
         require(_winner.length == _teamId.length, "Length Doesn't Match.");
         require(_teamId.length == _amount.length, "Length Doesn't Match.");
         for (uint256 i = 0; i < _winner.length; i++) {
-            // if (participantsByTeam[_teamId[i]]) {
+            if (participantsByTeam[_teamId[i]]) {
             fundsByWinnersByTeam[_teamId[i]] = _amount[i] * 1e18;
             winnersTeamIDAddress[_teamId[i]] = _winner[i];
             require(token.transfer(_winner[i], _amount[i] * 1e18));
-            // }
+            }
         }
 
-        emit WinnersDataUpdated();
+        return true;
+    }
+
+    function cancelMatch(
+        address[] memory _player,
+        uint256[] memory _teamId
+    )
+        public
+        onlyOwner
+        onlyAfterEnd
+        returns (
+            bool
+        )
+    {
+        require(_player.length == _teamId.length, "Length Doesn't Match.");
+        for (uint256 i = 0; i < _player.length; i++) {
+            if (participantsByTeam[_teamId[i]]) {
+            require(token.transfer(_player[i], contestFee));
+            }
+        }
+
         return true;
     }
 
@@ -197,21 +178,13 @@ contract RageContest is EIP712MetaTransaction {
         return (winnersTeamIDAddress[_teamId], fundsByWinnersByTeam[_teamId]);
     }
 
-    struct PlayerPoint {
-        uint256[] playerId;
-        uint256[] point;
-    }
-    mapping(uint256 => PlayerPoint) particpant;
-
-    uint256[] public playersId;
-    uint256[] public points;
+    
 
     function setPlayerPoint(
         uint256[] memory _player,
         uint256[] memory _point,
         uint256 _matchId
     ) public onlyOwner returns (bool) {
-        require(msg.sender == owner);
         for (uint256 i = 0; i < _player.length; i++) {
             playersId.push(_player[i]);
             points.push(_point[i]);
@@ -230,21 +203,12 @@ contract RageContest is EIP712MetaTransaction {
         return (particpant[_matchId].playerId, particpant[_matchId].point);
     }
 
-    struct TeamData {
-        uint256[] playerId;
-        address particpant;
-        uint256 teamId;
-    }
-
-    mapping(uint256 => TeamData) playerData;
-
     function setTeamData(
         uint256[] memory _player,
         address _particpant,
         uint256 _teamId,
         uint256 _trx
     ) public onlyOwner returns (bool) {
-        require(msg.sender == owner);
         for (uint256 i = 0; i < _player.length; i++) {
             playersId.push(_player[i]);
         }
@@ -271,100 +235,10 @@ contract RageContest is EIP712MetaTransaction {
         );
     }
 
-    function updatePlayerPoints(
-        uint256[] memory _playerIds,
-        uint256[] memory _points
-    ) public onlyOwner onlyAfterEnd onlyNotCanceled returns (bool success) {
-        //
-        // update player points
-        //
 
-        for (uint256 i = 0; i < _playerIds.length; i++) {
-            uint256 _playerId = _playerIds[i];
-
-            if (playersList[_playerId]) {
-                playersData[_playerId].points = _points[i];
-            }
-        }
-
-        emit PlayerDataUpdated();
-        return true;
-    }
-
-    /*     
-  
-function changeTeam(uint _value)
-        public
-        onlyBeforeStart
-        onlyNotCanceled
-        returns (bool success)
-        {
-        
-        emit ChangeTeamDone();
-        return true;
-    }
-*/
-
-    /*
- 
- */
-
-    // function getContestants ()
-    //     view
-    //     public
-    //     returns(memory address[])
-    //     {
-    //         return contestants;
-    //     }
-
-    //
-    // status = true - if cancelled
-    // status = false - if not cancelled
-    //
-
-    function cancelContest(bool status)
-        public
-        onlyOwner
-        returns (bool success)
-    {
-        canceled = status;
-
-        emit ContestCanceled();
-        return true;
-    }
-
-    modifier onlyAfterStart() {
-        require(block.timestamp > startTime);
-        _;
-    }
-
-    modifier onlyBeforeStart() {
-        require(block.timestamp < startTime);
-        _;
-    }
-
-    modifier onlyNotCanceled() {
-        require(!canceled);
-        _;
-    }
-
-    modifier onlyBeforeEnd() {
-        require(block.timestamp < endTime);
-        _;
-    }
 
     modifier onlyAfterEnd() {
-        require(block.timestamp > endTime);
-        _;
-    }
-
-    modifier onlyAfterSettlement() {
-        require(settled);
-        _;
-    }
-
-    modifier onlyEndedOrCanceled() {
-        require(block.timestamp > endTime || canceled);
+        require(block.timestamp >= endTime);
         _;
     }
 

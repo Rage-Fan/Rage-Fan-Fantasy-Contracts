@@ -3,7 +3,6 @@
 pragma solidity 0.5.16;
 
 contract EIP712Base {
-
     struct EIP712Domain {
         string name;
         string version;
@@ -11,43 +10,60 @@ contract EIP712Base {
         address verifyingContract;
     }
 
-    bytes32 internal constant EIP712_DOMAIN_TYPEHASH = keccak256(bytes("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"));
+    bytes32 internal constant EIP712_DOMAIN_TYPEHASH =
+        keccak256(
+            bytes(
+                "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+            )
+        );
 
     bytes32 internal domainSeperator;
 
     uint256 private _chainid;
 
-    constructor(string memory name, string memory version, uint256 chainid) public {
-      _chainid = chainid;
-      
-      domainSeperator = keccak256(abi.encode(
-			EIP712_DOMAIN_TYPEHASH,
-			keccak256(bytes(name)),
-			keccak256(bytes(version)),
-			getChainID(),
-			address(this)
-		));
+    constructor(
+        string memory name,
+        string memory version,
+        uint256 chainid
+    ) public {
+        _chainid = chainid;
+
+        domainSeperator = keccak256(
+            abi.encode(
+                EIP712_DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                keccak256(bytes(version)),
+                getChainID(),
+                address(this)
+            )
+        );
     }
 
     function getChainID() public view returns (uint256) {
-		    return _chainid;
-	}
-
-    function getDomainSeperator() private view returns(bytes32) {
-		return domainSeperator;
-	}
-
-    /**
-    * Accept message hash and returns hash message in EIP712 compatible form
-    * So that it can be used to recover signer from signature signed using EIP712 formatted data
-    * https://eips.ethereum.org/EIPS/eip-712
-    * "\\x19" makes the encoding deterministic
-    * "\\x01" is the version byte to make it compatible to EIP-191
-    */
-    function toTypedMessageHash(bytes32 messageHash) internal view returns(bytes32) {
-        return keccak256(abi.encodePacked("\x19\x01", getDomainSeperator(), messageHash));
+        return _chainid;
     }
 
+    function getDomainSeperator() private view returns (bytes32) {
+        return domainSeperator;
+    }
+
+    /**
+     * Accept message hash and returns hash message in EIP712 compatible form
+     * So that it can be used to recover signer from signature signed using EIP712 formatted data
+     * https://eips.ethereum.org/EIPS/eip-712
+     * "\\x19" makes the encoding deterministic
+     * "\\x01" is the version byte to make it compatible to EIP-191
+     */
+    function toTypedMessageHash(bytes32 messageHash)
+        internal
+        view
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encodePacked("\x19\x01", getDomainSeperator(), messageHash)
+            );
+    }
 }
 
 // File: @openzeppelin/contracts/math/SafeMath.sol
@@ -108,7 +124,11 @@ library SafeMath {
      *
      * _Available since v2.4.0._
      */
-    function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b <= a, errorMessage);
         uint256 c = a - b;
 
@@ -166,7 +186,11 @@ library SafeMath {
      *
      * _Available since v2.4.0._
      */
-    function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         // Solidity only automatically asserts when dividing by 0
         require(b > 0, errorMessage);
         uint256 c = a / b;
@@ -203,7 +227,11 @@ library SafeMath {
      *
      * _Available since v2.4.0._
      */
-    function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
         require(b != 0, errorMessage);
         return a % b;
     }
@@ -213,13 +241,20 @@ library SafeMath {
 
 pragma solidity 0.5.16;
 
-
-
 contract EIP712MetaTransaction is EIP712Base {
     using SafeMath for uint256;
-    bytes32 private constant META_TRANSACTION_TYPEHASH = keccak256(bytes("MetaTransaction(uint256 nonce,address from,bytes functionSignature)"));
+    bytes32 private constant META_TRANSACTION_TYPEHASH =
+        keccak256(
+            bytes(
+                "MetaTransaction(uint256 nonce,address from,bytes functionSignature)"
+            )
+        );
 
-    event MetaTransactionExecuted(address userAddress, address payable relayerAddress, bytes functionSignature);
+    event MetaTransactionExecuted(
+        address userAddress,
+        address payable relayerAddress,
+        bytes functionSignature
+    );
     mapping(address => uint256) private nonces;
 
     /*
@@ -233,9 +268,17 @@ contract EIP712MetaTransaction is EIP712Base {
         bytes functionSignature;
     }
 
-    constructor(string memory name, string memory version, uint256 chainid) public EIP712Base(name, version, chainid) {}
+    constructor(
+        string memory name,
+        string memory version,
+        uint256 chainid
+    ) public EIP712Base(name, version, chainid) {}
 
-    function convertBytesToBytes4(bytes memory inBytes) internal pure returns (bytes4 outBytes4) {
+    function convertBytesToBytes4(bytes memory inBytes)
+        internal
+        pure
+        returns (bytes4 outBytes4)
+    {
         if (inBytes.length == 0) {
             return 0x0;
         }
@@ -245,51 +288,89 @@ contract EIP712MetaTransaction is EIP712Base {
         }
     }
 
-    function executeMetaTransaction(address userAddress,
-        bytes memory functionSignature, bytes32 sigR, bytes32 sigS, uint8 sigV) public payable returns(bytes memory) {
+    function executeMetaTransaction(
+        address userAddress,
+        bytes memory functionSignature,
+        bytes32 sigR,
+        bytes32 sigS,
+        uint8 sigV
+    ) public payable returns (bytes memory) {
         bytes4 destinationFunctionSig = convertBytesToBytes4(functionSignature);
-        require(destinationFunctionSig != msg.sig, "functionSignature can not be of executeMetaTransaction method");
+        require(
+            destinationFunctionSig != msg.sig,
+            "functionSignature can not be of executeMetaTransaction method"
+        );
         MetaTransaction memory metaTx = MetaTransaction({
             nonce: nonces[userAddress],
             from: userAddress,
             functionSignature: functionSignature
         });
-        require(verify(userAddress, metaTx, sigR, sigS, sigV), "Signer and signature do not match");
+        require(
+            verify(userAddress, metaTx, sigR, sigS, sigV),
+            "Signer and signature do not match"
+        );
         nonces[userAddress] = nonces[userAddress].add(1);
         // Append userAddress at the end to extract it from calling context
-        (bool success, bytes memory returnData) = address(this).call(abi.encodePacked(functionSignature, userAddress));
+        (bool success, bytes memory returnData) = address(this).call(
+            abi.encodePacked(functionSignature, userAddress)
+        );
 
         require(success, "Function call not successful");
-        emit MetaTransactionExecuted(userAddress, msg.sender, functionSignature);
+        emit MetaTransactionExecuted(
+            userAddress,
+            msg.sender,
+            functionSignature
+        );
         return returnData;
     }
 
-    function hashMetaTransaction(MetaTransaction memory metaTx) internal pure returns (bytes32) {
-        return keccak256(abi.encode(
-            META_TRANSACTION_TYPEHASH,
-            metaTx.nonce,
-            metaTx.from,
-            keccak256(metaTx.functionSignature)
-        ));
+    function hashMetaTransaction(MetaTransaction memory metaTx)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encode(
+                    META_TRANSACTION_TYPEHASH,
+                    metaTx.nonce,
+                    metaTx.from,
+                    keccak256(metaTx.functionSignature)
+                )
+            );
     }
 
-    function getNonce(address user) external view returns(uint256 nonce) {
+    function getNonce(address user) external view returns (uint256 nonce) {
         nonce = nonces[user];
     }
 
-    function verify(address user, MetaTransaction memory metaTx, bytes32 sigR, bytes32 sigS, uint8 sigV) internal view returns (bool) {
-        address signer = ecrecover(toTypedMessageHash(hashMetaTransaction(metaTx)), sigV, sigR, sigS);
+    function verify(
+        address user,
+        MetaTransaction memory metaTx,
+        bytes32 sigR,
+        bytes32 sigS,
+        uint8 sigV
+    ) internal view returns (bool) {
+        address signer = ecrecover(
+            toTypedMessageHash(hashMetaTransaction(metaTx)),
+            sigV,
+            sigR,
+            sigS
+        );
         require(signer != address(0), "Invalid signature");
         return signer == user;
     }
 
-    function msgSender() internal view returns(address sender) {
-        if(msg.sender == address(this)) {
+    function msgSender() internal view returns (address sender) {
+        if (msg.sender == address(this)) {
             bytes memory array = msg.data;
             uint256 index = msg.data.length;
             assembly {
                 // Load the 32 bytes word from memory with the address on the lower 20 bytes, and mask those.
-                sender := and(mload(add(array, index)), 0xffffffffffffffffffffffffffffffffffffffff)
+                sender := and(
+                    mload(add(array, index)),
+                    0xffffffffffffffffffffffffffffffffffffffff
+                )
             }
         } else {
             sender = msg.sender;
@@ -315,7 +396,8 @@ pragma solidity >=0.5.0 <0.6.1;
 contract Context {
     // Empty internal constructor, to prevent people from mistakenly deploying
     // an instance of this contract, which should be used via inheritance.
-    constructor () internal { }
+    constructor() internal {}
+
     // solhint-disable-previous-line no-empty-blocks
 
     function _msgSender() internal view returns (address payable) {
@@ -354,7 +436,9 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transfer(address recipient, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
 
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -363,7 +447,10 @@ interface IERC20 {
      *
      * This value changes when {approve} or {transferFrom} are called.
      */
-    function allowance(address owner, address spender) external view returns (uint256);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
@@ -390,7 +477,11 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
 
     /**
      * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -404,15 +495,16 @@ interface IERC20 {
      * @dev Emitted when the allowance of a `spender` for an `owner` is set by
      * a call to {approve}. `value` is the new allowance.
      */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 }
 
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 
 pragma solidity >=0.5.0 <0.6.1;
-
-
-
 
 /**
  * @dev Implementation of the {IERC20} interface.
@@ -441,9 +533,9 @@ pragma solidity >=0.5.0 <0.6.1;
 contract ERC20 is Context, IERC20 {
     using SafeMath for uint256;
 
-    mapping (address => uint256) private _balances;
+    mapping(address => uint256) private _balances;
 
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
 
@@ -477,7 +569,11 @@ contract ERC20 is Context, IERC20 {
     /**
      * @dev See {IERC20-allowance}.
      */
-    function allowance(address owner, address spender) public view returns (uint256) {
+    function allowance(address owner, address spender)
+        public
+        view
+        returns (uint256)
+    {
         return _allowances[owner][spender];
     }
 
@@ -505,9 +601,20 @@ contract ERC20 is Context, IERC20 {
      * - the caller must have allowance for `sender`'s tokens of at least
      * `amount`.
      */
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        _approve(
+            sender,
+            _msgSender(),
+            _allowances[sender][_msgSender()].sub(
+                amount,
+                "ERC20: transfer amount exceeds allowance"
+            )
+        );
         return true;
     }
 
@@ -523,8 +630,15 @@ contract ERC20 is Context, IERC20 {
      *
      * - `spender` cannot be the zero address.
      */
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        returns (bool)
+    {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].add(addedValue)
+        );
         return true;
     }
 
@@ -542,8 +656,18 @@ contract ERC20 is Context, IERC20 {
      * - `spender` must have allowance for the caller of at least
      * `subtractedValue`.
      */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        returns (bool)
+    {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].sub(
+                subtractedValue,
+                "ERC20: decreased allowance below zero"
+            )
+        );
         return true;
     }
 
@@ -561,11 +685,18 @@ contract ERC20 is Context, IERC20 {
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal {
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
+        _balances[sender] = _balances[sender].sub(
+            amount,
+            "ERC20: transfer amount exceeds balance"
+        );
         _balances[recipient] = _balances[recipient].add(amount);
         emit Transfer(sender, recipient, amount);
     }
@@ -601,7 +732,10 @@ contract ERC20 is Context, IERC20 {
     function _burn(address account, uint256 amount) internal {
         require(account != address(0), "ERC20: burn from the zero address");
 
-        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
+        _balances[account] = _balances[account].sub(
+            amount,
+            "ERC20: burn amount exceeds balance"
+        );
         _totalSupply = _totalSupply.sub(amount);
         emit Transfer(account, address(0), amount);
     }
@@ -619,7 +753,11 @@ contract ERC20 is Context, IERC20 {
      * - `owner` cannot be the zero address.
      * - `spender` cannot be the zero address.
      */
-    function _approve(address owner, address spender, uint256 amount) internal {
+    function _approve(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -635,14 +773,20 @@ contract ERC20 is Context, IERC20 {
      */
     function _burnFrom(address account, uint256 amount) internal {
         _burn(account, amount);
-        _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "ERC20: burn amount exceeds allowance"));
+        _approve(
+            account,
+            _msgSender(),
+            _allowances[account][_msgSender()].sub(
+                amount,
+                "ERC20: burn amount exceeds allowance"
+            )
+        );
     }
 }
 
 // File: @openzeppelin/contracts/token/ERC20/ERC20Detailed.sol
 
 pragma solidity >=0.5.0 <0.6.1;
-
 
 /**
  * @dev Optional functions from the ERC20 standard.
@@ -657,7 +801,11 @@ contract ERC20Detailed is IERC20 {
      * these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name, string memory symbol, uint8 decimals) public {
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) public {
         _name = name;
         _symbol = symbol;
         _decimals = decimals;
@@ -711,12 +859,15 @@ pragma solidity >=0.5.0 <0.6.1;
 contract Ownable is Context {
     address private _owner;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor () internal {
+    constructor() internal {
         address msgSender = _msgSender();
         _owner = msgSender;
         emit OwnershipTransferred(address(0), msgSender);
@@ -768,7 +919,10 @@ contract Ownable is Context {
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      */
     function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        require(
+            newOwner != address(0),
+            "Ownable: new owner is the zero address"
+        );
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
@@ -778,18 +932,14 @@ contract Ownable is Context {
 
 pragma solidity 0.5.16;
 
-
-
-
-
-contract RageToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable  {
+contract RageToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable {
     uint256 public initialSupply = 1000000000000000000000;
 
     constructor()
         public
-        ERC20Detailed("RAGE Token", "TRAGE", 18) 
+        ERC20Detailed("RAGE Token", "TRAGE", 18)
         EIP712MetaTransaction("RageToken", "1", 80001)
-    {           
+    {
         _mint(msgSender(), initialSupply);
     }
 
@@ -798,51 +948,48 @@ contract RageToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable  {
         return true;
     }
 
-	// helper function
+    // helper function
     function mint(uint256 supply) external {
         _mint(msgSender(), supply);
     }
 
-    function transfer (address to, uint256 value)
-    public
-    returns (bool success)
-    {
-        super._transfer(msgSender(), to, value);       
-         return true;                 
+    function transfer(address to, uint256 value) public returns (bool success) {
+        super._transfer(msgSender(), to, value);
+        return true;
     }
 
-    function transferFrom (address from, address to, uint256 value)
-    public        
-    returns (bool success)
-    {       
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public returns (bool success) {
         super.transferFrom(from, to, value);
-        return true;       
+        return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        returns (bool)
+    {
         super.increaseAllowance(spender, addedValue);
         return true;
     }
 
     function burnToken(address to, uint256 value)
-     public  
-     onlyOwner  
-     returns (bool success)
-    {   
-       super._burn(to, value);   
+        public
+        onlyOwner
+        returns (bool success)
+    {
+        super._burn(to, value);
         success = true;
     }
-
 }
 
 // File: contracts/RageContest.sol
 
 pragma solidity 0.5.16;
 
-
-
 contract RageContest is EIP712MetaTransaction {
- 
     RageToken private token;
 
     string public contestId;
@@ -850,137 +997,155 @@ contract RageContest is EIP712MetaTransaction {
     string public contestTitle;
     uint256 public contestFees;
     uint256 public winningAmount;
- 
+
     bool public isActive;
     address public owner;
-    
+
     Player[] public players;
 
-    uint public prizePool;
-    uint public decimals;
-    
-    uint public maxContestants;
-    uint public minContestants;
-    uint public startTime;
-    uint public endTime;
-    bool public canceled;  
-    bool public settled; 
-    address  public player; 
-    address[] public contestants; 
-    
+    uint256 public prizePool;
+    uint256 public decimals;
+
+    uint256 public maxContestants;
+    uint256 public minContestants;
+    uint256 public startTime;
+    uint256 public endTime;
+    bool public canceled;
+    bool public settled;
+    address public player;
+    address[] public contestants;
+
     struct Player {
-      string id; 
-      string name;
-      uint points;
-      string captain;  //C,VC,P  
+        string id;
+        string name;
+        uint256 points;
+        string captain; //C,VC,P
     }
 
-    mapping (uint => Player) public playersData;
-    mapping (uint => bool) internal playersList;
+    mapping(uint256 => Player) public playersData;
+    mapping(uint256 => bool) internal playersList;
 
-    mapping (address => uint256) public fundsByParticipants;
-    mapping  (address => mapping (address => uint256) ) public fundsByParticipantsByTeam;
-    mapping (address => uint256) public fundsByWinners;
-    mapping (address => bool) public participantsList;
+    mapping(address => uint256) public fundsByParticipants;
+    mapping(address => mapping(address => uint256))
+        public fundsByParticipantsByTeam;
+    mapping(address => uint256) public fundsByWinners;
+    mapping(address => bool) public participantsList;
 
     event ContestCanceled();
     event LogPlay(address player);
     event ApprovePlay(address player);
-     
-    event PlayerDataUpdated();
-    event LogWithdrawal(address withdrawer,  uint amount);
 
-    event ContestCreatedEvent(address sender, string  _id, string  _name,  uint _startTime, uint _endTime, 
-                string  _contestTitle);
+    event PlayerDataUpdated();
+    event LogWithdrawal(address withdrawer, uint256 amount);
+
+    event ContestCreatedEvent(
+        address sender,
+        string _id,
+        string _name,
+        uint256 _startTime,
+        uint256 _endTime,
+        string _contestTitle
+    );
+
     /*
-    * Contract Constructor
-    */
-    constructor(address _adminOwner) 
-    public 
-    EIP712MetaTransaction("RageContestContract","1", 80001)
-    {  
-                name  =   "FirstGameofCricket"; 
-                owner =   _adminOwner;                 
-                canceled = false;
-                settled = false;                     
+     * Contract Constructor
+     */
+    constructor(address _adminOwner)
+        public
+        EIP712MetaTransaction("RageContestContract", "1", 80001)
+    {
+        name = "FirstGameofCricket";
+        owner = _adminOwner;
+        canceled = false;
+        settled = false;
     }
 
- function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
-                string memory _contestTitle,
-                uint256 _contestFees, 
-                uint256 _winningAmount, 
-                bool _isActive,
-                address _token
-                ) public {
-                    
+    function init(
+        string memory _id,
+        string memory _name,
+        uint256 _startTime,
+        uint256 _endTime,
+        string memory _contestTitle,
+        uint256 _contestFees,
+        uint256 _winningAmount,
+        bool _isActive,
+        address _token
+    ) public {
         require(bytes(name).length == 0); // ensure not init'd already.
         require(bytes(_name).length > 0);
 
-                contestId       =   _id;
-                name            =   _name;
-                startTime       =   _startTime;
-                endTime         =   _endTime;
-                contestTitle    =   _contestTitle;
-                contestFees     =   _contestFees;
-                winningAmount   =   _winningAmount;
-                isActive        =   _isActive;
-                owner = msgSender();            
-                token = RageToken(_token); 
-                canceled = false;
-                settled = false;  
-                
-         }
+        contestId = _id;
+        name = _name;
+        startTime = _startTime;
+        endTime = _endTime;
+        contestTitle = _contestTitle;
+        contestFees = _contestFees;
+        winningAmount = _winningAmount;
+        isActive = _isActive;
+        owner = msgSender();
+        token = RageToken(_token);
+        canceled = false;
+        settled = false;
+    }
 
- function callContest() public {
-    emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
-  }   
+    function callContest() public {
+        emit ContestCreatedEvent(
+            address(this),
+            contestId,
+            name,
+            startTime,
+            endTime,
+            contestTitle
+        );
+    }
 
-function withdraw(uint256 _amount)
-        public 
+    function withdraw(uint256 _amount)
+        public
         onlyEndedOrCanceled
         returns (bool success)
-        {
-            require(_amount <= fundsByParticipants[msgSender()]);
-                fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
-            
-            require(token.transfer(msgSender(), _amount));
+    {
+        require(_amount <= fundsByParticipants[msgSender()]);
+        fundsByParticipants[msgSender()] =
+            fundsByParticipants[msgSender()] -
+            _amount;
 
-            emit LogWithdrawal(msgSender(), _amount);
-            return true;
-        }
+        require(token.transfer(msgSender(), _amount));
 
-function withdrawWinningAmount(uint256 _amount)
-        public 
-        onlyAfterEnd 
+        emit LogWithdrawal(msgSender(), _amount);
+        return true;
+    }
+
+    function withdrawWinningAmount(uint256 _amount)
+        public
+        onlyAfterEnd
         onlyNotCanceled
         onlyAfterSettlement
         returns (bool success)
-        {
-            require(_amount <= fundsByParticipants[msgSender()]);
-            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
-            
-            require(token.transfer(msgSender(), _amount));
+    {
+        require(_amount <= fundsByParticipants[msgSender()]);
+        fundsByParticipants[msgSender()] =
+            fundsByParticipants[msgSender()] -
+            _amount;
 
-            emit LogWithdrawal(msgSender(), _amount);
-            return true;
+        require(token.transfer(msgSender(), _amount));
 
-        }
-     
-function playNow(uint256 _value)
-        public            
-        returns (bool success)
-        {
-        
-        require (_value != 0);
-        require (_value > 0);
-        
-        // transfer play entry fee to the smart contract 
-        //       
-        require(token.balanceOf(msgSender()) > _value); 
+        emit LogWithdrawal(msgSender(), _amount);
+        return true;
+    }
+
+    function playNow(uint256 _value) public returns (bool success) {
+        require(_value != 0);
+        require(_value > 0);
+
+        // transfer play entry fee to the smart contract
+        //
+        require(token.balanceOf(msgSender()) > _value);
         //token.approve(spender, _value);
-        token.transferFrom(msgSender(), address(this), _value);   
+        token.transferFrom(msgSender(), address(this), _value);
 
-        fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
+        fundsByParticipants[msgSender()] =
+            fundsByParticipants[msgSender()] +
+            _value;
 
         //fundsByParticipantsByTeam[msgSender()][teamid] = _value ;
 
@@ -989,7 +1154,7 @@ function playNow(uint256 _value)
         return true;
     }
 
-/*     
+    /*     
   
 function changeTeam(uint _value)
         public
@@ -1003,7 +1168,7 @@ function changeTeam(uint _value)
     }
 */
 
-/*
+    /*
  function updateWinningData(address[] memory _winners, uint256[] memory _amount)
         public
         onlyOwner
@@ -1035,29 +1200,25 @@ function changeTeam(uint _value)
     }
  */
 
- function updatePlayerPoints(uint[] memory _playerIds, uint[] memory _points)
-        public
-        onlyOwner
-        onlyAfterEnd
-        onlyNotCanceled
-        returns (bool success)
-    {
+    function updatePlayerPoints(
+        uint256[] memory _playerIds,
+        uint256[] memory _points
+    ) public onlyOwner onlyAfterEnd onlyNotCanceled returns (bool success) {
         //
-        // update player points  
-        // 
-        
-        for (uint i=0; i<_playerIds.length; i++) {
-            uint _playerId = _playerIds[i];
+        // update player points
+        //
 
-            if(playersList[_playerId]) {
-                playersData[_playerId].points =  _points[i];   
+        for (uint256 i = 0; i < _playerIds.length; i++) {
+            uint256 _playerId = _playerIds[i];
+
+            if (playersList[_playerId]) {
+                playersData[_playerId].points = _points[i];
             }
         }
-       
+
         emit PlayerDataUpdated();
         return true;
     }
-
 
     // function getContestants ()
     //     view
@@ -1066,63 +1227,56 @@ function changeTeam(uint _value)
     //     {
     //         return contestants;
     //     }
-      
-function cancelContest()
-        public          
-        returns (bool success)
-    {
+
+    function cancelContest() public returns (bool success) {
         canceled = true;
 
         emit ContestCanceled();
         return true;
     }
 
-
-
-    modifier onlyAfterStart()  {
-        require (block.timestamp > startTime) ;
+    modifier onlyAfterStart() {
+        require(block.timestamp > startTime);
         _;
     }
 
     modifier onlyBeforeStart() {
-        require (block.timestamp < startTime) ;
+        require(block.timestamp < startTime);
         _;
     }
 
     modifier onlyNotCanceled() {
-        require (!canceled);
+        require(!canceled);
         _;
     }
-
 
     //     modifier onlyOwner() {
     //     require(_owner == _msgSender(), "Ownable: caller is not the owner");
     //     _;
     // }
 
-    modifier onlyBeforeEnd()  {
-        require (block.timestamp < endTime) ;
+    modifier onlyBeforeEnd() {
+        require(block.timestamp < endTime);
         _;
     }
 
-    modifier onlyAfterEnd()  {
-        require (block.timestamp > endTime) ;
+    modifier onlyAfterEnd() {
+        require(block.timestamp > endTime);
         _;
     }
 
     modifier onlyAfterSettlement() {
-        require (settled) ;
+        require(settled);
         _;
     }
 
-    modifier onlyEndedOrCanceled()   {
-        require (block.timestamp > endTime || canceled) ;
+    modifier onlyEndedOrCanceled() {
+        require(block.timestamp > endTime || canceled);
         _;
     }
 
     modifier onlyOwner() {
-        assert (msgSender() == owner) ;
+        assert(msgSender() == owner);
         _;
     }
-
 }
