@@ -1,6 +1,6 @@
 // File: contracts/EIP712Base.sol
 
-pragma solidity 0.5.16;
+pragma solidity >=0.5.16 <0.6.8;
 
 contract EIP712Base {
 
@@ -50,9 +50,13 @@ contract EIP712Base {
 
 }
 
+// File: contracts/SafeMath.sol
+
 // File: @openzeppelin/contracts/math/SafeMath.sol
 
-pragma solidity >=0.5.0 <0.6.1;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.2;
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -75,6 +79,7 @@ library SafeMath {
      * Counterpart to Solidity's `+` operator.
      *
      * Requirements:
+     *
      * - Addition cannot overflow.
      */
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -91,6 +96,7 @@ library SafeMath {
      * Counterpart to Solidity's `-` operator.
      *
      * Requirements:
+     *
      * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -104,9 +110,8 @@ library SafeMath {
      * Counterpart to Solidity's `-` operator.
      *
      * Requirements:
-     * - Subtraction cannot overflow.
      *
-     * _Available since v2.4.0._
+     * - Subtraction cannot overflow.
      */
     function sub(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b <= a, errorMessage);
@@ -122,6 +127,7 @@ library SafeMath {
      * Counterpart to Solidity's `*` operator.
      *
      * Requirements:
+     *
      * - Multiplication cannot overflow.
      */
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -147,6 +153,7 @@ library SafeMath {
      * uses an invalid opcode to revert (consuming all remaining gas).
      *
      * Requirements:
+     *
      * - The divisor cannot be zero.
      */
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -162,12 +169,10 @@ library SafeMath {
      * uses an invalid opcode to revert (consuming all remaining gas).
      *
      * Requirements:
-     * - The divisor cannot be zero.
      *
-     * _Available since v2.4.0._
+     * - The divisor cannot be zero.
      */
     function div(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
-        // Solidity only automatically asserts when dividing by 0
         require(b > 0, errorMessage);
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -184,6 +189,7 @@ library SafeMath {
      * invalid opcode to revert (consuming all remaining gas).
      *
      * Requirements:
+     *
      * - The divisor cannot be zero.
      */
     function mod(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -199,9 +205,8 @@ library SafeMath {
      * invalid opcode to revert (consuming all remaining gas).
      *
      * Requirements:
-     * - The divisor cannot be zero.
      *
-     * _Available since v2.4.0._
+     * - The divisor cannot be zero.
      */
     function mod(uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         require(b != 0, errorMessage);
@@ -211,7 +216,7 @@ library SafeMath {
 
 // File: contracts/EIP712MetaTransaction.sol
 
-pragma solidity 0.5.16;
+pragma solidity >=0.5.16 <0.6.8;
 
 
 
@@ -298,9 +303,15 @@ contract EIP712MetaTransaction is EIP712Base {
     }
 }
 
+// File: contracts/RageToken.sol
+
 // File: @openzeppelin/contracts/GSN/Context.sol
 
-pragma solidity >=0.5.0 <0.6.1;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.2;
+
+
 
 /*
  * @dev Provides information about the current execution context, including the
@@ -312,17 +323,12 @@ pragma solidity >=0.5.0 <0.6.1;
  *
  * This contract is only required for intermediate, library-like contracts.
  */
-contract Context {
-    // Empty internal constructor, to prevent people from mistakenly deploying
-    // an instance of this contract, which should be used via inheritance.
-    constructor () internal { }
-    // solhint-disable-previous-line no-empty-blocks
-
-    function _msgSender() internal view returns (address payable) {
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address payable) {
         return msg.sender;
     }
 
-    function _msgData() internal view returns (bytes memory) {
+    function _msgData() internal view virtual returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
@@ -330,11 +336,12 @@ contract Context {
 
 // File: @openzeppelin/contracts/token/ERC20/IERC20.sol
 
-pragma solidity >=0.5.0 <0.6.1;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.2;
 
 /**
- * @dev Interface of the ERC20 standard as defined in the EIP. Does not include
- * the optional functions; to access them see {ERC20Detailed}.
+ * @dev Interface of the ERC20 standard as defined in the EIP.
  */
 interface IERC20 {
     /**
@@ -407,9 +414,156 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+// File: @openzeppelin/contracts/utils/Address.sol
+
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.2;
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * [IMPORTANT]
+     * ====
+     * It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     *
+     * Among others, `isContract` will return false for the following
+     * types of addresses:
+     *
+     *  - an externally-owned account
+     *  - a contract in construction
+     *  - an address where a contract will be created
+     *  - an address where a contract lived, but was destroyed
+     * ====
+     */
+    function isContract(address account) internal view returns (bool) {
+        // According to EIP-1052, 0x0 is the value returned for not-yet created accounts
+        // and 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 is returned
+        // for accounts without code, i.e. `keccak256('')`
+        bytes32 codehash;
+        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+        // solhint-disable-next-line no-inline-assembly
+        assembly { codehash := extcodehash(account) }
+        return (codehash != accountHash && codehash != 0x0);
+    }
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        require(address(this).balance >= amount, "Address: insufficient balance");
+
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        (bool success, ) = recipient.call{ value: amount }("");
+        require(success, "Address: unable to send value, recipient may have reverted");
+    }
+
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain`call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason, it is bubbled up by this
+     * function (like regular Solidity function calls).
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+      return functionCall(target, data, "Address: low-level call failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with
+     * `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+        return _functionCallWithValue(target, data, 0, errorMessage);
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+        return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but
+     * with `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+        require(address(this).balance >= value, "Address: insufficient balance for call");
+        return _functionCallWithValue(target, data, value, errorMessage);
+    }
+
+    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
+        require(isContract(target), "Address: call to non-contract");
+
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returndata) = target.call{ value: weiValue }(data);
+        if (success) {
+            return returndata;
+        } else {
+            // Look for revert reason and bubble it up if present
+            if (returndata.length > 0) {
+                // The easiest way to bubble the revert reason is using memory via assembly
+
+                // solhint-disable-next-line no-inline-assembly
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                revert(errorMessage);
+            }
+        }
+    }
+}
+
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 
-pragma solidity >=0.5.0 <0.6.1;
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.2;
+
 
 
 
@@ -419,7 +573,7 @@ pragma solidity >=0.5.0 <0.6.1;
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using {_mint}.
- * For a generic mechanism see {ERC20Mintable}.
+ * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
  * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
@@ -440,6 +594,7 @@ pragma solidity >=0.5.0 <0.6.1;
  */
 contract ERC20 is Context, IERC20 {
     using SafeMath for uint256;
+    using Address for address;
 
     mapping (address => uint256) private _balances;
 
@@ -447,220 +602,23 @@ contract ERC20 is Context, IERC20 {
 
     uint256 private _totalSupply;
 
-    /**
-     * @dev See {IERC20-totalSupply}.
-     */
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
-    }
-
-    /**
-     * @dev See {IERC20-balanceOf}.
-     */
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
-    }
-
-    /**
-     * @dev See {IERC20-transfer}.
-     *
-     * Requirements:
-     *
-     * - `recipient` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
-     */
-    function transfer(address recipient, uint256 amount) public returns (bool) {
-        _transfer(_msgSender(), recipient, amount);
-        return true;
-    }
-
-    /**
-     * @dev See {IERC20-allowance}.
-     */
-    function allowance(address owner, address spender) public view returns (uint256) {
-        return _allowances[owner][spender];
-    }
-
-    /**
-     * @dev See {IERC20-approve}.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function approve(address spender, uint256 amount) public returns (bool) {
-        _approve(_msgSender(), spender, amount);
-        return true;
-    }
-
-    /**
-     * @dev See {IERC20-transferFrom}.
-     *
-     * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20};
-     *
-     * Requirements:
-     * - `sender` and `recipient` cannot be the zero address.
-     * - `sender` must have a balance of at least `amount`.
-     * - the caller must have allowance for `sender`'s tokens of at least
-     * `amount`.
-     */
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
-        _transfer(sender, recipient, amount);
-        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
-        return true;
-    }
-
-    /**
-     * @dev Atomically increases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     */
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
-        return true;
-    }
-
-    /**
-     * @dev Atomically decreases the allowance granted to `spender` by the caller.
-     *
-     * This is an alternative to {approve} that can be used as a mitigation for
-     * problems described in {IERC20-approve}.
-     *
-     * Emits an {Approval} event indicating the updated allowance.
-     *
-     * Requirements:
-     *
-     * - `spender` cannot be the zero address.
-     * - `spender` must have allowance for the caller of at least
-     * `subtractedValue`.
-     */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
-        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
-        return true;
-    }
-
-    /**
-     * @dev Moves tokens `amount` from `sender` to `recipient`.
-     *
-     * This is internal function is equivalent to {transfer}, and can be used to
-     * e.g. implement automatic token fees, slashing mechanisms, etc.
-     *
-     * Emits a {Transfer} event.
-     *
-     * Requirements:
-     *
-     * - `sender` cannot be the zero address.
-     * - `recipient` cannot be the zero address.
-     * - `sender` must have a balance of at least `amount`.
-     */
-    function _transfer(address sender, address recipient, uint256 amount) internal {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
-
-        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
-        _balances[recipient] = _balances[recipient].add(amount);
-        emit Transfer(sender, recipient, amount);
-    }
-
-    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
-     * the total supply.
-     *
-     * Emits a {Transfer} event with `from` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `to` cannot be the zero address.
-     */
-    function _mint(address account, uint256 amount) internal {
-        require(account != address(0), "ERC20: mint to the zero address");
-
-        _totalSupply = _totalSupply.add(amount);
-        _balances[account] = _balances[account].add(amount);
-        emit Transfer(address(0), account, amount);
-    }
-
-    /**
-     * @dev Destroys `amount` tokens from `account`, reducing the
-     * total supply.
-     *
-     * Emits a {Transfer} event with `to` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `account` cannot be the zero address.
-     * - `account` must have at least `amount` tokens.
-     */
-    function _burn(address account, uint256 amount) internal {
-        require(account != address(0), "ERC20: burn from the zero address");
-
-        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
-        _totalSupply = _totalSupply.sub(amount);
-        emit Transfer(account, address(0), amount);
-    }
-
-    /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
-     *
-     * This is internal function is equivalent to `approve`, and can be used to
-     * e.g. set automatic allowances for certain subsystems, etc.
-     *
-     * Emits an {Approval} event.
-     *
-     * Requirements:
-     *
-     * - `owner` cannot be the zero address.
-     * - `spender` cannot be the zero address.
-     */
-    function _approve(address owner, address spender, uint256 amount) internal {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
-
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
-    }
-
-    /**
-     * @dev Destroys `amount` tokens from `account`.`amount` is then deducted
-     * from the caller's allowance.
-     *
-     * See {_burn} and {_approve}.
-     */
-    function _burnFrom(address account, uint256 amount) internal {
-        _burn(account, amount);
-        _approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "ERC20: burn amount exceeds allowance"));
-    }
-}
-
-// File: @openzeppelin/contracts/token/ERC20/ERC20Detailed.sol
-
-pragma solidity >=0.5.0 <0.6.1;
-
-
-/**
- * @dev Optional functions from the ERC20 standard.
- */
-contract ERC20Detailed is IERC20 {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
 
     /**
-     * @dev Sets the values for `name`, `symbol`, and `decimals`. All three of
-     * these values are immutable: they can only be set once during
+     * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
+     * a default value of 18.
+     *
+     * To select a different value for {decimals}, use {_setupDecimals}.
+     *
+     * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor (string memory name, string memory symbol, uint8 decimals) public {
+    constructor (string memory name, string memory symbol) public {
         _name = name;
         _symbol = symbol;
-        _decimals = decimals;
+        _decimals = 18;
     }
 
     /**
@@ -684,7 +642,8 @@ contract ERC20Detailed is IERC20 {
      * be displayed to a user as `5,05` (`505 / 10 ** 2`).
      *
      * Tokens usually opt for a value of 18, imitating the relationship between
-     * Ether and Wei.
+     * Ether and Wei. This is the value {ERC20} uses, unless {_setupDecimals} is
+     * called.
      *
      * NOTE: This information is only used for _display_ purposes: it in
      * no way affects any of the arithmetic of the contract, including
@@ -693,156 +652,240 @@ contract ERC20Detailed is IERC20 {
     function decimals() public view returns (uint8) {
         return _decimals;
     }
-}
-
-// File: @openzeppelin/contracts/ownership/Ownable.sol
-
-pragma solidity >=0.5.0 <0.6.1;
-
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
- */
-contract Ownable is Context {
-    address private _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
+     * @dev See {IERC20-totalSupply}.
      */
-    constructor () internal {
-        address msgSender = _msgSender();
-        _owner = msgSender;
-        emit OwnershipTransferred(address(0), msgSender);
+    function totalSupply() public view override returns (uint256) {
+        return _totalSupply;
     }
 
     /**
-     * @dev Returns the address of the current owner.
+     * @dev See {IERC20-balanceOf}.
      */
-    function owner() public view returns (address) {
-        return _owner;
+    function balanceOf(address account) public view override returns (uint256) {
+        return _balances[account];
     }
 
     /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
-    function isOwner() public view returns (bool) {
-        return _msgSender() == _owner;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
+     * @dev See {IERC20-transfer}.
      *
-     * NOTE: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
+     * Requirements:
+     *
+     * - `recipient` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
      */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        _transfer(_msgSender(), recipient, amount);
+        return true;
     }
 
     /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
+     * @dev See {IERC20-allowance}.
      */
-    function transferOwnership(address newOwner) public onlyOwner {
-        _transferOwnership(newOwner);
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+        return _allowances[owner][spender];
     }
 
     /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * @dev See {IERC20-approve}.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
      */
-    function _transferOwnership(address newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        _approve(_msgSender(), spender, amount);
+        return true;
     }
+
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20};
+     *
+     * Requirements:
+     * - `sender` and `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``sender``'s tokens of at least
+     * `amount`.
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        _transfer(sender, recipient, amount);
+        _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        return true;
+    }
+
+    /**
+     * @dev Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
+        return true;
+    }
+
+    /**
+     * @dev Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+        _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+        return true;
+    }
+
+    /**
+     * @dev Moves tokens `amount` from `sender` to `recipient`.
+     *
+     * This is internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements:
+     *
+     * - `sender` cannot be the zero address.
+     * - `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     */
+    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
+
+        _beforeTokenTransfer(sender, recipient, amount);
+
+        _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
+        _balances[recipient] = _balances[recipient].add(amount);
+        emit Transfer(sender, recipient, amount);
+    }
+
+    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address.
+     *
+     * Requirements
+     *
+     * - `to` cannot be the zero address.
+     */
+    function _mint(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _beforeTokenTransfer(address(0), account, amount);
+
+        _totalSupply = _totalSupply.add(amount);
+        _balances[account] = _balances[account].add(amount);
+        emit Transfer(address(0), account, amount);
+    }
+
+    /**
+     * @dev Destroys `amount` tokens from `account`, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * Requirements
+     *
+     * - `account` cannot be the zero address.
+     * - `account` must have at least `amount` tokens.
+     */
+    function _burn(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        _beforeTokenTransfer(account, address(0), amount);
+
+        _balances[account] = _balances[account].sub(amount, "ERC20: burn amount exceeds balance");
+        _totalSupply = _totalSupply.sub(amount);
+        emit Transfer(account, address(0), amount);
+    }
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
+     *
+     * This is internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `owner` cannot be the zero address.
+     * - `spender` cannot be the zero address.
+     */
+    function _approve(address owner, address spender, uint256 amount) internal virtual {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
+    /**
+     * @dev Sets {decimals} to a value other than the default one of 18.
+     *
+     * WARNING: This function should only be called from the constructor. Most
+     * applications that interact with token contracts will not expect
+     * {decimals} to ever change, and may work incorrectly if it does.
+     */
+    function _setupDecimals(uint8 decimals_) internal {
+        _decimals = decimals_;
+    }
+
+    /**
+     * @dev Hook that is called before any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * will be to transferred to `to`.
+     * - when `from` is zero, `amount` tokens will be minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 }
 
-// File: contracts/RageToken.sol
-
-pragma solidity 0.5.16;
-
-
-
-
-
-contract RageToken is ERC20, ERC20Detailed, EIP712MetaTransaction, Ownable  {
+contract RageToken is ERC20, EIP712MetaTransaction  {
     uint256 public initialSupply = 1000000000000000000000;
 
     constructor()
         public
-        ERC20Detailed("RAGE Token", "TRAGE", 18) 
-        EIP712MetaTransaction("RageToken", "1", 80001)
+        ERC20("RAGE Token", "TRAGE")
+        EIP712MetaTransaction("RageToken", "1", 137)
     {           
         _mint(msgSender(), initialSupply);
     }
-
-    function approve(address spender, uint256 amount) public returns (bool) {
-        super._approve(msgSender(), spender, amount);
-        return true;
-    }
-
-	// helper function
-    function mint(uint256 supply) external {
-        _mint(msgSender(), supply);
-    }
-
-    function transfer (address to, uint256 value)
-    public
-    returns (bool success)
-    {
-        super._transfer(msgSender(), to, value);       
-         return true;                 
-    }
-
-    function transferFrom (address from, address to, uint256 value)
-    public        
-    returns (bool success)
-    {       
-        super.transferFrom(from, to, value);
-        return true;       
-    }
-
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
-        super.increaseAllowance(spender, addedValue);
-        return true;
-    }
-
-    function burnToken(address to, uint256 value)
-     public  
-     onlyOwner  
-     returns (bool success)
-    {   
-       super._burn(to, value);   
-        success = true;
-    }
-
 }
 
 // File: contracts/RageContest.sol
 
-pragma solidity 0.5.16;
+pragma solidity ^0.6.2;
 
 
 
 contract RageContest is EIP712MetaTransaction {
- 
     RageToken private token;
 
     string public contestId;
@@ -850,279 +893,382 @@ contract RageContest is EIP712MetaTransaction {
     string public contestTitle;
     uint256 public contestFees;
     uint256 public winningAmount;
- 
+
     bool public isActive;
     address public owner;
-    
-    Player[] public players;
 
-    uint public prizePool;
-    uint public decimals;
-    
-    uint public maxContestants;
-    uint public minContestants;
-    uint public startTime;
-    uint public endTime;
-    bool public canceled;  
-    bool public settled; 
-    address  public player; 
-    address[] public contestants; 
-    
+    address public tokenAddress;
+    // Player[] public players;
+
+    uint256 public prizePool;
+    uint256 public decimals;
+
+    uint256 public maxContestants;
+    uint256 public minContestants;
+    uint256 public startTime;
+    uint256 public endTime;
+    bool public canceled;
+    bool public settled;
+    address public player;
+    address[] public contestants;
+
     struct Player {
-      string id; 
-      string name;
-      uint points;
-      string captain;  //C,VC,P  
+        string id;
+        string name;
+        uint256 points;
+        string captain; //C,VC,P
     }
 
-    mapping (uint => Player) public playersData;
-    mapping (uint => bool) internal playersList;
+    mapping(uint256 => Player) public playersData;
+    mapping(uint256 => bool) internal playersList;
 
-    mapping (address => uint256) public fundsByParticipants;
-    mapping  (address => mapping (address => uint256) ) public fundsByParticipantsByTeam;
-    mapping (address => uint256) public fundsByWinners;
-    mapping (address => bool) public participantsList;
+    mapping(address => uint256) public fundsByParticipants;
+    mapping(uint256 => uint256) public fundsByWinnersByTeam; //id - amount
+    mapping(uint256 => address) public winnersTeamIDAddress; //id - walletaddress
+
+    mapping(uint256 => bool) public participantsByTeam; // teamid - bool
 
     event ContestCanceled();
     event LogPlay(address player);
     event ApprovePlay(address player);
-     
+
+    event WinnersDataUpdated();
     event PlayerDataUpdated();
-    event LogWithdrawal(address withdrawer,  uint amount);
 
-    event ContestCreatedEvent(address sender, string  _id, string  _name,  uint _startTime, uint _endTime, 
-                string  _contestTitle);
+    event LogWithdrawal(address withdrawer, uint256 amount);
+
+    event ContestCreatedEvent(
+        address sender,
+        string _id,
+        string _name,
+        uint256 _startTime,
+        uint256 _endTime,
+        string _contestTitle
+    );
+
     /*
-    * Contract Constructor
-    */
-    constructor(address _adminOwner) 
-    public 
-    EIP712MetaTransaction("RageContestContract","1", 80001)
-    {  
-                name  =   "FirstGameofCricket"; 
-                owner =   _adminOwner;                 
-                canceled = false;
-                settled = false;                     
-    }
-
- function init(string memory _id, string memory _name,  uint _startTime, uint _endTime, 
-                string memory _contestTitle,
-                uint256 _contestFees, 
-                uint256 _winningAmount, 
-                bool _isActive,
-                address _token
-                ) public {
-                    
+     * Contract Constructor
+     */
+    constructor(
+        address _adminOwner,
+        string memory _id,
+        string memory _name,
+        uint256 _startTime,
+        uint256 _endTime,
+        string memory _contestTitle,
+        uint256 _contestFees,
+        uint256 _winningAmount,
+        bool _isActive,
+        address _token
+    ) public EIP712MetaTransaction("RageContestContract", "1", 137) {
+        //Used constructor
         require(bytes(name).length == 0); // ensure not init'd already.
         require(bytes(_name).length > 0);
 
-                contestId       =   _id;
-                name            =   _name;
-                startTime       =   _startTime;
-                endTime         =   _endTime;
-                contestTitle    =   _contestTitle;
-                contestFees     =   _contestFees;
-                winningAmount   =   _winningAmount;
-                isActive        =   _isActive;
-                owner = msgSender();            
-                token = RageToken(_token); 
-                canceled = false;
-                settled = false;  
-                
-         }
+        contestId = _id;
+        name = _name;
+        startTime = _startTime;
+        endTime = _endTime;
+        contestTitle = _contestTitle;
+        contestFees = _contestFees;
+        winningAmount = _winningAmount;
+        isActive = _isActive;
+        owner = _adminOwner;
+        token = RageToken(_token);
+        tokenAddress = _token;
+        canceled = false;
+        settled = false;
+    }
 
- function callContest() public {
-    emit ContestCreatedEvent(address(this), contestId, name, startTime, endTime, contestTitle);
-  }   
+    function callContest() public {
+        emit ContestCreatedEvent(
+            address(this),
+            contestId,
+            name,
+            startTime,
+            endTime,
+            contestTitle
+        );
+    }
 
-function withdraw(uint256 _amount)
-        public 
-        onlyEndedOrCanceled
-        returns (bool success)
-        {
-            require(_amount <= fundsByParticipants[msgSender()]);
-                fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
-            
-            require(token.transfer(msgSender(), _amount));
+    function withdraw(uint256 _amount, uint256 _teamId) public returns (bool) {
+        require(_amount <= fundsByParticipants[msgSender()]);
+        fundsByParticipants[msgSender()] =
+            fundsByParticipants[msgSender()] -
+            _amount;
 
-            emit LogWithdrawal(msgSender(), _amount);
-            return true;
-        }
+        require(token.transfer(msgSender(), _amount));
+        participantsByTeam[_teamId] = false;
 
-function withdrawWinningAmount(uint256 _amount)
-        public 
-        onlyAfterEnd 
-        onlyNotCanceled
-        onlyAfterSettlement
-        returns (bool success)
-        {
-            require(_amount <= fundsByParticipants[msgSender()]);
-            fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] - _amount;
-            
-            require(token.transfer(msgSender(), _amount));
+        emit LogWithdrawal(msgSender(), _amount);
+        return true;
+    }
 
-            emit LogWithdrawal(msgSender(), _amount);
-            return true;
+    function withdrawAdmin(uint256 value, address _receiver)
+        public
+        onlyOwner
+        returns (bool)
+    {
+        require(token.transfer(_receiver, value));
 
-        }
-     
-function playNow(uint256 _value)
-        public            
-        returns (bool success)
-        {
-        
-        require (_value != 0);
-        require (_value > 0);
-        
-        // transfer play entry fee to the smart contract 
-        //       
-        require(token.balanceOf(msgSender()) > _value); 
-        //token.approve(spender, _value);
-        token.transferFrom(msgSender(), address(this), _value);   
+        // emit LogWithdrawal(msgSender());
+        return true;
+    }
 
-        fundsByParticipants[msgSender()] = fundsByParticipants[msgSender()] + _value;
+    function withdrawWinningAmount(uint256 _amount, uint256 _teamId)
+        public
+        returns (bool)
+    {
+        require(_amount <= fundsByWinnersByTeam[_teamId]);
+        require(msgSender() <= winnersTeamIDAddress[_teamId]);
 
-        //fundsByParticipantsByTeam[msgSender()][teamid] = _value ;
+        require(token.transfer(msgSender(), _amount));
+        fundsByWinnersByTeam[_teamId] = 0;
 
-        // other data to be updated
+        emit LogWithdrawal(msgSender(), _amount);
+        return true;
+    }
+
+    function playNow(uint256 _value, uint256 _teamId) public returns (bool) {
+        require(!participantsByTeam[_teamId], "Team id already exist");
+        // transfer play entry fee to the smart contract
+        require(token.balanceOf(msgSender()) > _value,"Balance of method failed");
+        token.transferFrom(msgSender(), address(this), _value);
+
+        fundsByParticipants[msgSender()] =
+            fundsByParticipants[msgSender()] +
+            _value;
+        participantsByTeam[_teamId] = true;
+
         emit LogPlay(msgSender());
         return true;
     }
 
-/*     
-  
-function changeTeam(uint _value)
-        public
-        onlyBeforeStart
-        onlyNotCanceled
-        returns (bool success)
-        {
-        
-        emit ChangeTeamDone();
-        return true;
-    }
-*/
-
-/*
- function updateWinningData(address[] memory _winners, uint256[] memory _amount)
+    function updateWinnerData(
+        address[] memory _winner,
+        uint256[] memory _teamId,
+        uint256[] memory _amount
+    )
         public
         onlyOwner
-        onlyAfterEnd
-        onlyNotCanceled
-        returns (bool success)
+        returns (
+            // onlyAfterEnd
+            // onlyNotCanceled
+            bool
+        )
     {
-        
-        // update the winning address with
-        // winning amount 
-        // and playid 
-        // since more than one play is possible from
-        // the same address 
-        
-        
-        for (uint i=0; i<_winners.length; i++) {
-            address _winner = _winners[i];
-
-            if(participantsList[_winner]) {
-                // participantsList[_playerId].points =  _points[i]; 
-                fundsByWinners[_winner] = 
-
-            }
+        require(_winner.length == _teamId.length, "Length Doesn't Match.");
+        require(_teamId.length == _amount.length, "Length Doesn't Match.");
+        for (uint256 i = 0; i < _winner.length; i++) {
+            // if (participantsByTeam[_teamId[i]]) {
+            fundsByWinnersByTeam[_teamId[i]] = _amount[i];
+            winnersTeamIDAddress[_teamId[i]] = _winner[i];
+            require(token.transfer(_winner[i], _amount[i]));
+            // }
         }
-      
 
         emit WinnersDataUpdated();
         return true;
     }
- */
 
- function updatePlayerPoints(uint[] memory _playerIds, uint[] memory _points)
+    function getWinnerData(uint256 _teamId)
         public
-        onlyOwner
-        onlyAfterEnd
-        onlyNotCanceled
-        returns (bool success)
+        view
+        returns (address, uint256)
     {
-        //
-        // update player points  
-        // 
-        
-        for (uint i=0; i<_playerIds.length; i++) {
-            uint _playerId = _playerIds[i];
+        return (winnersTeamIDAddress[_teamId], fundsByWinnersByTeam[_teamId]);
+    }
 
-            if(playersList[_playerId]) {
-                playersData[_playerId].points =  _points[i];   
+    struct PlayerPoint {
+        uint256[] playerId;
+        uint256[] point;
+    }
+    mapping(uint256 => PlayerPoint) particpant;
+
+    uint256[] public playersId;
+    uint256[] public points;
+
+    function setPlayerPoint(
+        uint256[] memory _player,
+        uint256[] memory _point,
+        uint256 _matchId
+    ) public onlyOwner returns (bool) {
+        require(msg.sender == owner);
+        for (uint256 i = 0; i < _player.length; i++) {
+            playersId.push(_player[i]);
+            points.push(_point[i]);
+        }
+
+        particpant[_matchId].playerId = playersId;
+        particpant[_matchId].point = points;
+        return true;
+    }
+
+    function getPlayerPoint(uint256 _matchId)
+        public
+        view
+        returns (uint256[] memory, uint256[] memory)
+    {
+        return (particpant[_matchId].playerId, particpant[_matchId].point);
+    }
+
+    struct TeamData {
+        uint256[] playerId;
+        address particpant;
+        uint256 teamId;
+    }
+
+    mapping(uint256 => TeamData) playerData;
+
+    function setTeamData(
+        uint256[] memory _player,
+        address _particpant,
+        uint256 _teamId,
+        uint256 _trx
+    ) public onlyOwner returns (bool) {
+        require(msg.sender == owner);
+        for (uint256 i = 0; i < _player.length; i++) {
+            playersId.push(_player[i]);
+        }
+
+        playerData[_trx].playerId = playersId;
+        playerData[_trx].particpant = _particpant;
+        playerData[_trx].teamId = _teamId;
+        return true;
+    }
+
+    function getTeamData(uint256 _trx)
+        public
+        view
+        returns (
+            uint256[] memory,
+            address,
+            uint256
+        )
+    {
+        return (
+            playerData[_trx].playerId,
+            playerData[_trx].particpant,
+            playerData[_trx].teamId
+        );
+    }
+
+    function updatePlayerPoints(
+        uint256[] memory _playerIds,
+        uint256[] memory _points
+    ) public onlyOwner onlyAfterEnd onlyNotCanceled returns (bool success) {
+        //
+        // update player points
+        //
+
+        for (uint256 i = 0; i < _playerIds.length; i++) {
+            uint256 _playerId = _playerIds[i];
+
+            if (playersList[_playerId]) {
+                playersData[_playerId].points = _points[i];
             }
         }
-       
+
         emit PlayerDataUpdated();
         return true;
     }
 
-
-    // function getContestants ()
-    //     view
-    //     public
-    //     returns(memory address[])
-    //     {
-    //         return contestants;
-    //     }
-      
-function cancelContest()
-        public          
+    function cancelContest(bool status)
+        public
+        onlyOwner
         returns (bool success)
     {
-        canceled = true;
+        canceled = status;
 
         emit ContestCanceled();
         return true;
     }
 
-
-
-    modifier onlyAfterStart()  {
-        require (block.timestamp > startTime) ;
+    modifier onlyAfterStart() {
+        require(block.timestamp > startTime);
         _;
     }
 
     modifier onlyBeforeStart() {
-        require (block.timestamp < startTime) ;
+        require(block.timestamp < startTime);
         _;
     }
 
     modifier onlyNotCanceled() {
-        require (!canceled);
+        require(!canceled);
         _;
     }
 
-
-    //     modifier onlyOwner() {
-    //     require(_owner == _msgSender(), "Ownable: caller is not the owner");
-    //     _;
-    // }
-
-    modifier onlyBeforeEnd()  {
-        require (block.timestamp < endTime) ;
+    modifier onlyBeforeEnd() {
+        require(block.timestamp < endTime);
         _;
     }
 
-    modifier onlyAfterEnd()  {
-        require (block.timestamp > endTime) ;
+    modifier onlyAfterEnd() {
+        require(block.timestamp > endTime);
         _;
     }
 
     modifier onlyAfterSettlement() {
-        require (settled) ;
+        require(settled);
         _;
     }
 
-    modifier onlyEndedOrCanceled()   {
-        require (block.timestamp > endTime || canceled) ;
+    modifier onlyEndedOrCanceled() {
+        require(block.timestamp > endTime || canceled);
         _;
     }
 
     modifier onlyOwner() {
-        assert (msgSender() == owner) ;
+        assert(msgSender() == owner);
         _;
     }
+}
+
+// File: contracts/RageFactory.sol
+
+pragma solidity ^0.6.2;
+
+/**
+ * Name    : Rage Factory Contract for managing contests smart contracts 
+ * Company : Rage.Fan 
+ * Author  : Saravana Malaichami (saravana at rage.fan)
+ * Date    : 20-Feb-2021
+ * Version : 0.1 
+ */
+
+
+contract RageFactory  {
+    address[] public contests;
+    address public  owner;
+
+    event ContestCreated(string  name, address contestAddress);
+    // rageContest, ownerAddress, "59", "140 Trage", 1618491600, 1618495200000, "Oeiras vs Miranda Dragons (Safe)", 10, 140, true, tokenAddress
+    
+    function createNewContest(address _ownerAddress,string memory _id, string memory _name,  uint _startTime, 
+                              uint _endTime, string memory _contestTitle, uint256 _contestFees, 
+                              uint256 _winningAmount, bool _isActive, address _tokenAddress
+                            )
+                            // onlyOwner
+                            public returns (address) {
+
+
+                RageContest newContest = new RageContest( _ownerAddress,_id, _name, _startTime, _endTime,
+                                                          _contestTitle,
+                                                          _contestFees,
+                                                          _winningAmount,
+                                                          _isActive,
+                                                          _tokenAddress
+                                                        );
+                contests.push(address(newContest));
+
+                emit ContestCreated(_name, address(newContest));
+                return address(newContest);
+        }
+
+    //     modifier onlyOwner {
+    //     assert (msg.sender == owner) ;
+    //     _;
+    // }
 
 }
